@@ -33,7 +33,7 @@ export default function BookCard({
       {/* Book cover with badges */}
       <div className="relative">
         <img
-          src={BookImg}
+          src={`http://localhost:5001/api/Images/Books/${coverImage}`}
           alt={`${title} by ${author}`}
           className="w-full h-64 object-cover"
         />
@@ -100,7 +100,7 @@ export default function BookCard({
             <span className="font-bold text-lg">${price.toFixed(2)}</span>
             {originalPrice && (
               <span className="text-gray-500 text-sm line-through ml-2">
-                ${originalPrice.toFixed(2)}
+                Rs {originalPrice.toFixed(2)}
               </span>
             )}
           </div>

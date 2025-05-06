@@ -14,75 +14,9 @@ import {
   Search,
 } from "lucide-react";
 
-// Mock data for initial books
-const initialBooks = [
-  {
-    id: "1",
-    title: "The Great Gatsby",
-    isbn: "9780743273565",
-    publishedDate: "2004-09-30",
-    publisher: "Scribner",
-    price: 15,
-    quantity: 25,
-    totalSold: 1240,
-    totalRating: 4,
-    description:
-      "The Great Gatsby is a 1925 novel by American writer F. Scott Fitzgerald.",
-    totalReviews: "420",
-    releaseStatus: "Published",
-    isOnSale: true,
-    isBestSeller: true,
-    discountStartDate: "2025-05-01",
-    discountEndDate: "2025-05-15",
-    authors: ["F. Scott Fitzgerald"],
-  },
-  {
-    id: "2",
-    title: "To Kill a Mockingbird",
-    isbn: "9780061120084",
-    publishedDate: "2006-05-23",
-    publisher: "Harper Perennial",
-    price: 12,
-    quantity: 18,
-    totalSold: 980,
-    totalRating: 5,
-    description:
-      "To Kill a Mockingbird is a novel by Harper Lee published in 1960.",
-    totalReviews: "350",
-    releaseStatus: "Published",
-    isOnSale: false,
-    isBestSeller: true,
-    discountStartDate: "",
-    discountEndDate: "",
-    authors: ["Harper Lee"],
-  },
-  {
-    id: "3",
-    title: "1984",
-    isbn: "9780451524935",
-    publishedDate: "1990-06-01",
-    publisher: "Signet Classic",
-    price: 9,
-    quantity: 30,
-    totalSold: 1560,
-    totalRating: 4,
-    description:
-      "1984 is a dystopian novel by George Orwell published in 1949.",
-    totalReviews: "520",
-    releaseStatus: "Published",
-    isOnSale: true,
-    isBestSeller: true,
-    discountStartDate: "2025-05-01",
-    discountEndDate: "2025-06-01",
-    authors: ["George Orwell"],
-  },
-];
-
-// Sidebar Component
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   const navigate = useNavigate();
 
-  // Navigation items with icons
   const navItems = [
     {
       id: "dashboard",
@@ -128,15 +62,15 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         isSidebarOpen ? "w-64" : "w-20"
       } transition-all duration-300 ease-in-out flex flex-col`}
     >
-      {/* Sidebar Header */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800">
-        {isSidebarOpen && (
+        {isSidebarOpen ? (
           <div className="flex items-center">
             <BookOpen size={24} />
             <span className="ml-2 font-bold text-xl">PustakPasal</span>
           </div>
+        ) : (
+          <BookOpen className="mx-auto" size={24} />
         )}
-        {!isSidebarOpen && <BookOpen className="mx-auto" size={24} />}
         <button
           onClick={toggleSidebar}
           className="p-1 rounded-full hover:bg-gray-800 focus:outline-none"
@@ -148,7 +82,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         </button>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4">
         <ul>
           {navItems.map((item) => (
@@ -167,7 +100,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
         </ul>
       </nav>
 
-      {/* Sidebar Footer */}
       <div className="p-4 border-t border-gray-800">
         <button
           onClick={() => navigate("/login")}
@@ -181,33 +113,18 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   );
 };
 
-// Main Layout Component
 const AdminLayout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [books, setBooks] = useState(initialBooks);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const addBook = (newBook) => {
-    setBooks([...books, newBook]);
-  };
-
-  const updateBook = (updatedBook) => {
-    setBooks(
-      books.map((book) => (book.id === updatedBook.id ? updatedBook : book))
-    );
-  };
-
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
       <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
         <header className="bg-white border-b border-gray-200 z-10">
           <div className="flex items-center justify-between h-16 px-6">
             <div className="flex items-center">
@@ -223,7 +140,6 @@ const AdminLayout = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              {/* Search */}
               <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-1">
                 <Search size={18} className="text-gray-500" />
                 <input
@@ -233,13 +149,11 @@ const AdminLayout = () => {
                 />
               </div>
 
-              {/* Notifications */}
               <button className="p-1 text-gray-600 hover:text-gray-900 relative">
                 <Bell size={20} />
                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
 
-              {/* Admin Profile */}
               <div className="flex items-center">
                 <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
                   <span className="text-sm font-medium text-gray-700">AP</span>
@@ -249,9 +163,8 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto bg-gray-100 p-6">
-          <Outlet context={{ books, addBook, updateBook }} />
+          <Outlet />
         </main>
       </div>
     </div>

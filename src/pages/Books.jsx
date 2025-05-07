@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronDown } from "lucide-react";
+import { Search, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import BookCard from "../components/BookCard";
 
 export default function BooksPage() {
@@ -8,16 +8,23 @@ export default function BooksPage() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 12;
 
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/Books');
+        setLoading(true);
+        const response = await fetch(
+          `http://localhost:5001/api/Books?page=${currentPage}&pageSize=${pageSize}`
+        );
         if (!response.ok) {
           throw new Error('Failed to fetch books');
         }
         const data = await response.json();
-        setBooks(data);
+        setBooks(data.books);
+        setTotalCount(data.totalCount);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -26,7 +33,17 @@ export default function BooksPage() {
     };
 
     fetchBooks();
-  }, []);
+  }, [currentPage]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
 
   // Filter books based on search
   const filteredBooks = books.filter((book) => {
@@ -111,23 +128,48 @@ export default function BooksPage() {
 
       {/* Book Cards Grid */}
       {sortedBooks.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {sortedBooks.map((book) => (
-            <BookCard
-              key={book.id}
-              id={book.id}
-              title={book.title}
-              author={book.publisher}
-              price={book.price}
-              originalPrice={book.isOnSale ? book.price * 1.2 : null}
-              rating={4.5} // You might want to add rating to your API
-              reviewCount={0} // You might want to add review count to your API
-              coverImage={book.frontImage}
-              isNewRelease={book.releaseStatus === "Coming Soon"}
-              isBestseller={book.stock > 100}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {sortedBooks.map((book) => (
+              <BookCard
+                key={book.id}
+                id={book.id}
+                title={book.title}
+                author={book.publisher}
+                price={book.price}
+                originalPrice={book.isOnSale ? book.price * 1.2 : null}
+                rating={4.5}
+                reviewCount={0}
+                coverImage={book.frontImage}
+                isNewRelease={book.releaseStatus === "Coming Soon"}
+                isBestseller={book.stock > 100}
+              />
+            ))}
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="mt-8 flex justify-center items-center gap-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="p-2 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            
+            <span className="px-4 py-2">
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </>
       ) : (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">

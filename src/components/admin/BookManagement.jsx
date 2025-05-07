@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
-import { useOutletContext } from "react-router";
-import { BookOpen, Box, Plus, ShoppingCart, Star, Upload } from "lucide-react";
+import {
+  BookOpen,
+  Box,
+  Plus,
+  ShoppingCart,
+  Star,
+  Upload,
+  X,
+  UserPlus,
+} from "lucide-react";
 import axios from "axios";
 
 const BookStatistics = ({ stats }) => {
@@ -35,8 +43,6 @@ const BookStatistics = ({ stats }) => {
 };
 
 const BooksList = ({ books, setIsAddingBook, setSelectedBook, fetchBooks }) => {
-  console.log("BooksList component rendered");
-  console.log("Books:", books);
   return (
     <div className="overflow-x-auto">
       <div className="flex justify-between mb-6">
@@ -60,19 +66,16 @@ const BooksList = ({ books, setIsAddingBook, setSelectedBook, fetchBooks }) => {
               Title
             </th>
             <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
-              ISBN
+              Authors
             </th>
             <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
-              Publisher
+              ISBN
             </th>
             <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
               Price
             </th>
             <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
               Stock
-            </th>
-            <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
-              Status
             </th>
             <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
               Actions
@@ -86,28 +89,35 @@ const BooksList = ({ books, setIsAddingBook, setSelectedBook, fetchBooks }) => {
                 <td className="py-4 px-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="h-10 w-10 flex-shrink-0 bg-gray-200 rounded-md flex items-center justify-center">
-                      <BookOpen size={16} className="text-gray-600" />
+                      {book.frontImage ? (
+                        <img
+                          src={`http://localhost:5001/api/Images/Books/${book.frontImage}`}
+                          alt={book.title}
+                          className="h-full w-full object-cover rounded-md"
+                        />
+                      ) : (
+                        <BookOpen size={16} className="text-gray-600" />
+                      )}
                     </div>
                     <div className="ml-4">
                       <div className="text-sm font-medium text-gray-900">
                         {book.title}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {book.authors?.join(", ")}
-                        {book.isBestSeller && (
-                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Bestseller
-                          </span>
-                        )}
-                      </div>
+                      {book.isBestSeller && (
+                        <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          Bestseller
+                        </span>
+                      )}
                     </div>
+                  </div>
+                </td>
+                <td className="py-4 px-4">
+                  <div className="text-sm text-gray-900">
+                    {book.authors?.map((author) => author.name).join(", ")}
                   </div>
                 </td>
                 <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">
                   {book.isbn}
-                </td>
-                <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">
-                  {book.publisher}
                 </td>
                 <td className="py-4 px-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">Rs {book.price}</div>
@@ -117,11 +127,6 @@ const BooksList = ({ books, setIsAddingBook, setSelectedBook, fetchBooks }) => {
                 </td>
                 <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">
                   {book.stock}
-                </td>
-                <td className="py-4 px-4 whitespace-nowrap">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {book.releaseStatus}
-                  </span>
                 </td>
                 <td className="py-4 px-4 whitespace-nowrap text-sm font-medium">
                   <button
@@ -140,9 +145,9 @@ const BooksList = ({ books, setIsAddingBook, setSelectedBook, fetchBooks }) => {
                           "Are you sure you want to delete this book?"
                         )
                       ) {
-                        await fetch(`/api/books/${book.id}`, {
-                          method: "DELETE",
-                        });
+                        await axios.delete(
+                          `http://localhost:5001/api/Books/${book.id}`
+                        );
                         fetchBooks();
                       }
                     }}
@@ -155,7 +160,13 @@ const BooksList = ({ books, setIsAddingBook, setSelectedBook, fetchBooks }) => {
             ))}
           </tbody>
         ) : (
-          "NO books found"
+          <tbody>
+            <tr>
+              <td colSpan="6" className="py-4 text-center text-gray-500">
+                No books found
+              </td>
+            </tr>
+          </tbody>
         )}
       </table>
     </div>
@@ -168,32 +179,28 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
   const [formData, setFormData] = useState({
     title: book?.title || "",
     isbn: book?.isbn || "",
+    description: book?.description || "",
+    price: book?.price || 0,
+    stock: book?.stock || 0,
     publishedDate: book?.publishedDate
       ? new Date(book.publishedDate).toISOString().split("T")[0]
       : "",
     publisher: book?.publisher || "",
-    description: book?.description || "",
-    price: book?.price || 0,
-    stock: book?.stock || 0,
-    releaseStatus: book?.releaseStatus || "Published",
+    releaseStatus: book?.releaseStatus || "Released",
     isOnSale: book?.isOnSale || false,
+    isBestSeller: book?.isBestSeller || false,
     discountStartDate: book?.discountStartDate
       ? new Date(book.discountStartDate).toISOString().split("T")[0]
       : "",
     discountEndDate: book?.discountEndDate
       ? new Date(book.discountEndDate).toISOString().split("T")[0]
       : "",
+    authors: book?.authors || [{ name: "", bio: "" }],
   });
 
-  const [frontImage, setFrontImage] = useState(null);
-  const [backImage, setBackImage] = useState(null);
+  const [frontImageFile, setFrontImageFile] = useState(null);
+  const [backImageFile, setBackImageFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [frontImagePreview, setFrontImagePreview] = useState(
-    book?.frontImageUrl || null
-  );
-  const [backImagePreview, setBackImagePreview] = useState(
-    book?.backImageUrl || null
-  );
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -203,30 +210,38 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
     });
   };
 
-  const handleFileChange = (e, imageType) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (imageType === "front") {
-        setFrontImagePreview(reader.result);
-        setFrontImage(file);
-      } else {
-        setBackImagePreview(reader.result);
-        setBackImage(file);
-      }
-    };
-    reader.readAsDataURL(file);
+  const handleAuthorChange = (index, field, value) => {
+    const updatedAuthors = [...formData.authors];
+    updatedAuthors[index][field] = value;
+    setFormData({
+      ...formData,
+      authors: updatedAuthors,
+    });
   };
 
-  const handleRemoveImage = (imageType) => {
+  const addAuthor = () => {
+    setFormData({
+      ...formData,
+      authors: [...formData.authors, { name: "", bio: "" }],
+    });
+  };
+
+  const removeAuthor = (index) => {
+    if (formData.authors.length <= 1) return;
+    const updatedAuthors = [...formData.authors];
+    updatedAuthors.splice(index, 1);
+    setFormData({
+      ...formData,
+      authors: updatedAuthors,
+    });
+  };
+
+  const handleFileChange = (e, imageType) => {
+    const file = e.target.files[0];
     if (imageType === "front") {
-      setFrontImagePreview(null);
-      setFrontImage(null);
+      setFrontImageFile(file);
     } else {
-      setBackImagePreview(null);
-      setBackImage(null);
+      setBackImageFile(file);
     }
   };
 
@@ -237,49 +252,65 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
     try {
       const formDataToSend = new FormData();
 
-      // Append all form data with exact property names
-      formDataToSend.append("title", formData.title);
-      formDataToSend.append("isbn", formData.isbn);
-      formDataToSend.append(
-        "publishedDate",
-        new Date(formData.publishedDate).toISOString()
-      );
-      formDataToSend.append("publisher", formData.publisher);
-      formDataToSend.append("description", formData.description);
-      formDataToSend.append("price", formData.price);
-      formDataToSend.append("stock", formData.stock);
-      formDataToSend.append("releaseStatus", formData.releaseStatus);
-      formDataToSend.append("isOnSale", formData.isOnSale);
+      // Append book data
+      formDataToSend.append("Title", formData.title);
+      formDataToSend.append("ISBN", formData.isbn);
+      formDataToSend.append("Description", formData.description);
+      formDataToSend.append("Price", formData.price);
+      formDataToSend.append("Stock", formData.stock);
+      if (formData.publishedDate) {
+        formDataToSend.append("PublishedDate", formData.publishedDate);
+      }
+      formDataToSend.append("Publisher", formData.publisher);
+      formDataToSend.append("ReleaseStatus", formData.releaseStatus);
+      formDataToSend.append("IsOnSale", formData.isOnSale);
+      formDataToSend.append("IsBestSeller", formData.isBestSeller);
 
-      // Only append discount dates if on sale
       if (formData.isOnSale) {
-        formDataToSend.append("discountStartDate", formData.discountStartDate);
-        formDataToSend.append("discountEndDate", formData.discountEndDate);
+        formDataToSend.append("DiscountStartDate", formData.discountStartDate);
+        formDataToSend.append("DiscountEndDate", formData.discountEndDate);
       }
 
-      // Append files with exact property names
-      if (frontImage) formDataToSend.append("frontImage", frontImage);
-      if (backImage) formDataToSend.append("backImage", backImage);
-
-      const response = await axios.post(
-        "http://localhost:5001/api/Books",
-        formDataToSend,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
+      // Append authors as JSON strings
+      formData.authors.forEach((author, index) => {
+        formDataToSend.append(`Authors[${index}].Name`, author.name);
+        if (author.bio) {
+          formDataToSend.append(`Authors[${index}].Bio`, author.bio);
         }
-      );
+      });
 
-      onSave();
+      // Append files if they exist
+      if (frontImageFile) formDataToSend.append("FrontImage", frontImageFile);
+      if (backImageFile) formDataToSend.append("BackImage", backImageFile);
+
+      let response;
+      if (isEditing) {
+        response = await axios.put(
+          `http://localhost:5001/api/Books/${book.id}`,
+          formDataToSend,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      } else {
+        response = await axios.post(
+          "http://localhost:5001/api/Books",
+          formDataToSend,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      }
+
       fetchBooks();
-      return response.data;
+      onSave();
     } catch (error) {
       console.error("Error saving book:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data ||
-        "Failed to save book";
-      alert(`Error: ${JSON.stringify(errorMessage)}`);
-      throw error;
+      alert(`Error: ${error.response?.data?.message || error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -344,11 +375,63 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Authors *
+              </label>
+              {formData.authors.map((author, index) => (
+                <div key={index} className="mb-4 space-y-2">
+                  <div className="flex items-center">
+                    <input
+                      type="text"
+                      placeholder="Author Name"
+                      value={author.name}
+                      onChange={(e) =>
+                        handleAuthorChange(index, "name", e.target.value)
+                      }
+                      required
+                      className="flex-1 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-black focus:border-black"
+                      disabled={isLoading}
+                    />
+                    {formData.authors.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeAuthor(index)}
+                        className="ml-2 text-red-500 hover:text-red-700"
+                        disabled={isLoading}
+                      >
+                        <X size={18} />
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    placeholder="Author Bio"
+                    value={author.bio}
+                    onChange={(e) =>
+                      handleAuthorChange(index, "bio", e.target.value)
+                    }
+                    className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-black focus:border-black"
+                    disabled={isLoading}
+                    rows="2"
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addAuthor}
+                className="flex items-center text-sm text-indigo-600 hover:text-indigo-800"
+                disabled={isLoading}
+              >
+                <Plus size={14} className="mr-1" />
+                Add Another Author
+              </button>
+            </div>
+
+            <div>
               <label
                 htmlFor="publishedDate"
                 className="block text-sm font-medium text-gray-700"
               >
-                Published Date *
+                Published Date
               </label>
               <input
                 type="date"
@@ -356,7 +439,6 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
                 name="publishedDate"
                 value={formData.publishedDate}
                 onChange={handleChange}
-                required
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-black focus:border-black"
                 disabled={isLoading}
               />
@@ -367,7 +449,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
                 htmlFor="publisher"
                 className="block text-sm font-medium text-gray-700"
               >
-                Publisher *
+                Publisher
               </label>
               <input
                 type="text"
@@ -375,12 +457,14 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
                 name="publisher"
                 value={formData.publisher}
                 onChange={handleChange}
-                required
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-black focus:border-black"
                 disabled={isLoading}
               />
             </div>
+          </div>
 
+          {/* Right Column */}
+          <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label
@@ -421,10 +505,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
                 />
               </div>
             </div>
-          </div>
 
-          {/* Right Column */}
-          <div className="space-y-6">
             <div>
               <label
                 htmlFor="description"
@@ -458,28 +539,47 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-black focus:border-black"
                 disabled={isLoading}
               >
-                <option value="Published">Published</option>
+                <option value="Released">Released</option>
                 <option value="Coming Soon">Coming Soon</option>
                 <option value="Out of Print">Out of Print</option>
               </select>
             </div>
 
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="isOnSale"
-                name="isOnSale"
-                checked={formData.isOnSale}
-                onChange={handleChange}
-                className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
-                disabled={isLoading}
-              />
-              <label
-                htmlFor="isOnSale"
-                className="ml-2 block text-sm text-gray-700"
-              >
-                On Sale
-              </label>
+            <div className="flex space-x-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isBestSeller"
+                  name="isBestSeller"
+                  checked={formData.isBestSeller}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+                  disabled={isLoading}
+                />
+                <label
+                  htmlFor="isBestSeller"
+                  className="ml-2 block text-sm text-gray-700"
+                >
+                  Best Seller
+                </label>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isOnSale"
+                  name="isOnSale"
+                  checked={formData.isOnSale}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+                  disabled={isLoading}
+                />
+                <label
+                  htmlFor="isOnSale"
+                  className="ml-2 block text-sm text-gray-700"
+                >
+                  On Sale
+                </label>
+              </div>
             </div>
 
             {formData.isOnSale && (
@@ -524,88 +624,60 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Front Cover Image
+                  Front Cover Image *
                 </label>
                 <div className="flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                  {frontImagePreview ? (
-                    <div className="relative">
-                      <img
-                        src={frontImagePreview}
-                        alt="Front Cover Preview"
-                        className="h-32 object-contain mx-auto"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage("front")}
-                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                  <div className="flex items-center justify-center">
+                    <BookOpen size={24} className="text-gray-400 mr-2" />
+                    <Upload size={24} className="text-gray-400" />
+                  </div>
+                  <div className="flex text-sm text-gray-600 mt-2">
+                    <label className="relative cursor-pointer bg-white rounded-md font-medium text-black hover:text-gray-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-black">
+                      <span>Upload a file</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(e, "front")}
+                        className="sr-only"
                         disabled={isLoading}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-center">
-                        <BookOpen size={24} className="text-gray-400 mr-2" />
-                        <Upload size={24} className="text-gray-400" />
-                      </div>
-                      <div className="flex text-sm text-gray-600 mt-2">
-                        <label className="relative cursor-pointer bg-white rounded-md font-medium text-black hover:text-gray-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-black">
-                          <span>Upload a file</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(e, "front")}
-                            className="sr-only"
-                            disabled={isLoading}
-                          />
-                        </label>
-                      </div>
-                    </>
+                        required={!isEditing} // Only required when adding new book
+                      />
+                    </label>
+                  </div>
+                  {frontImageFile && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Selected: {frontImageFile.name}
+                    </p>
                   )}
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Back Cover Image
+                  Back Cover Image *
                 </label>
                 <div className="flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                  {backImagePreview ? (
-                    <div className="relative">
-                      <img
-                        src={backImagePreview}
-                        alt="Back Cover Preview"
-                        className="h-32 object-contain mx-auto"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImage("back")}
-                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                  <div className="flex items-center justify-center">
+                    <BookOpen size={24} className="text-gray-400 mr-2" />
+                    <Upload size={24} className="text-gray-400" />
+                  </div>
+                  <div className="flex text-sm text-gray-600 mt-2">
+                    <label className="relative cursor-pointer bg-white rounded-md font-medium text-black hover:text-gray-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-black">
+                      <span>Upload a file</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleFileChange(e, "back")}
+                        className="sr-only"
                         disabled={isLoading}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center justify-center">
-                        <BookOpen size={24} className="text-gray-400 mr-2" />
-                        <Upload size={24} className="text-gray-400" />
-                      </div>
-                      <div className="flex text-sm text-gray-600 mt-2">
-                        <label className="relative cursor-pointer bg-white rounded-md font-medium text-black hover:text-gray-700 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-black">
-                          <span>Upload a file</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(e, "back")}
-                            className="sr-only"
-                            disabled={isLoading}
-                          />
-                        </label>
-                      </div>
-                    </>
+                        required={!isEditing} // Only required when adding new book
+                      />
+                    </label>
+                  </div>
+                  {backImageFile && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Selected: {backImageFile.name}
+                    </p>
                   )}
                 </div>
               </div>
@@ -620,7 +692,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
             disabled={isLoading}
           >
             {isLoading ? (
-              <span className="flex items-center">
+              <>
                 <svg
                   className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                   xmlns="http://www.w3.org/2000/svg"
@@ -642,7 +714,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
                   ></path>
                 </svg>
                 Processing...
-              </span>
+              </>
             ) : isEditing ? (
               <>
                 <Star size={16} className="mr-2" />
@@ -667,31 +739,38 @@ export const BooksManagement = () => {
   const [selectedBook, setSelectedBook] = useState(null);
   const [stats, setStats] = useState([
     { id: 1, name: "Total Books", stat: "0", icon: <BookOpen size={20} /> },
-    {
-      id: 2,
-      name: "Books Sold This Month",
-      stat: "0",
-      icon: <ShoppingCart size={20} />,
-    },
-    { id: 3, name: "Low Stock Alert", stat: "0", icon: <Box size={20} /> },
+    { id: 2, name: "Books Sold", stat: "0", icon: <ShoppingCart size={20} /> },
+    { id: 3, name: "Low Stock", stat: "0", icon: <Box size={20} /> },
     { id: 4, name: "Best Sellers", stat: "0", icon: <Star size={20} /> },
   ]);
 
   const fetchBooks = async () => {
     try {
-      const response = await fetch("http://localhost:5001/api/Books");
-      if (!response.ok) throw new Error("Failed to fetch books");
-      const data = await response.json();
-      console.log("Books data:", data);
-      setBooks(data);
+      const response = await axios.get("http://localhost:5001/api/Books");
+      setBooks(response.data.books);
 
-      // // Update stats
-      // setStats([
-      //   { ...stats[0], stat: data.totalBooks.toString() },
-      //   { ...stats[1], stat: data.booksSoldThisMonth.toString() },
-      //   { ...stats[2], stat: data.lowStockCount.toString() },
-      //   { ...stats[3], stat: data.bestSellersCount.toString() },
-      // ]);
+      // Update stats based on fetched data
+      setStats([
+        { ...stats[0], stat: response.data.books.length?.toString() },
+        {
+          ...stats[1],
+          stat: response.data.books
+            ?.reduce((sum, book) => sum + (book.totalSold || 0), 0)
+            ?.toString(),
+        },
+        {
+          ...stats[2],
+          stat: response.data.books
+            ?.filter((book) => book.stock < 5)
+            .length?.toString(),
+        },
+        {
+          ...stats[3],
+          stat: response.data.books
+            ?.filter((book) => book.isBestSeller)
+            .length?.toString(),
+        },
+      ]);
     } catch (error) {
       console.error("Error fetching books:", error);
     }
@@ -704,10 +783,11 @@ export const BooksManagement = () => {
   const handleSave = () => {
     setIsAddingBook(false);
     setSelectedBook(null);
+    fetchBooks();
   };
 
   return (
-    <>
+    <div className="space-y-6">
       {isAddingBook ? (
         <BookForm
           book={selectedBook}
@@ -720,7 +800,7 @@ export const BooksManagement = () => {
         />
       ) : (
         <>
-          {/* <BookStatistics stats={stats} /> */}
+          <BookStatistics stats={stats} />
           <BooksList
             books={books}
             setIsAddingBook={setIsAddingBook}
@@ -729,6 +809,6 @@ export const BooksManagement = () => {
           />
         </>
       )}
-    </>
+    </div>
   );
 };

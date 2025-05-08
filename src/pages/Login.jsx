@@ -1,12 +1,21 @@
 // Login.jsx
-import React, { useState } from "react";
-import { Link } from "react-router";
+import React, { useState, useContext } from "react";
+import { Link, useNavigate } from "react-router";
+import axios from "axios";
+import { CheckCircle2 } from "lucide-react";
+import { AuthContext } from "../contexts/AuthContext";
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -16,100 +25,151 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add your login logic here
-    console.log("Login data:", formData);
+    setIsLoading(true);
+    
+    try {
+      const response = await axios.post("http://localhost:5001/api/Auth/login", {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (response.data.token) {
+        // Use the login function from AuthContext
+        login(response.data.token, response.data.expiration);
+        
+        // Show success message
+        setShowSuccess(true);
+        
+        // Redirect after a short delay
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrors({
+        submit: error.response?.data?.message || "Invalid email or password. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="w-full max-w-md px-4">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold mb-2">Welcome back</h2>
-        <p className="text-gray-600">Please enter your details to sign in</p>
+    <>
+      {/* Success Popup */}
+      {showSuccess && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+          <div className="bg-white p-8 rounded-lg shadow-xl transform transition-all duration-300 scale-100 animate-fade-in-up relative z-10">
+            <div className="flex flex-col items-center">
+              <div className="bg-green-100 rounded-full p-3 mb-4">
+                <CheckCircle2 className="h-12 w-12 text-green-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Login Successful!</h3>
+              <p className="text-gray-600">Welcome back to Pustak Ghar</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="w-full max-w-md px-4">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold mb-2">Welcome back</h2>
+          <p className="text-gray-600">Please enter your details to sign in</p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-6">
+            <label htmlFor="email" className="block mb-2 font-medium">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="password" className="block mb-2 font-medium">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+
+          <div className="text-right mb-6">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-gray-600 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
+          {errors.submit && (
+            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded text-sm">
+              {errors.submit}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-black text-white py-3 rounded font-medium hover:bg-gray-800 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Signing in..." : "Sign In"}
+          </button>
+
+          <div className="flex items-center my-6">
+            <div className="flex-1 border-t border-gray-300"></div>
+            <span className="mx-4 text-sm text-gray-500">or continue with</span>
+            <div className="flex-1 border-t border-gray-300"></div>
+          </div>
+
+          <div className="flex space-x-4">
+            <button
+              type="button"
+              className="flex-1 py-2 border border-gray-300 rounded font-medium hover:bg-gray-50 transition duration-300"
+            >
+              Google
+            </button>
+            <button
+              type="button"
+              className="flex-1 py-2 border border-gray-300 rounded font-medium hover:bg-gray-50 transition duration-300"
+            >
+              Apple
+            </button>
+          </div>
+
+          <div className="mt-6 text-center">
+            <span className="text-gray-600">Don't have an account? </span>
+            <Link
+              to="/signup"
+              className="text-black font-medium hover:underline"
+            >
+              Sign up
+            </Link>
+          </div>
+        </form>
       </div>
-
-      <form onSubmit={handleSubmit}>
-        <div className="mb-6">
-          <label htmlFor="email" className="block mb-2 font-medium">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
-            placeholder="Enter your email"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="password" className="block mb-2 font-medium">
-            Password
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
-            placeholder="Enter your password"
-            required
-          />
-        </div>
-
-        <div className="text-right mb-6">
-          <Link
-            to="/forgot-password"
-            className="text-sm text-gray-600 hover:underline"
-          >
-            Forgot password?
-          </Link>
-        </div>
-
-        <button
-          type="submit"
-          className="w-full bg-black text-white py-3 rounded font-medium hover:bg-gray-800 transition duration-300"
-        >
-          Sign In
-        </button>
-
-        <div className="flex items-center my-6">
-          <div className="flex-1 border-t border-gray-300"></div>
-          <span className="mx-4 text-sm text-gray-500">or continue with</span>
-          <div className="flex-1 border-t border-gray-300"></div>
-        </div>
-
-        {/* <div className="flex space-x-4">
-          <button
-            type="button"
-            className="flex-1 py-2 border border-gray-300 rounded font-medium hover:bg-gray-50 transition duration-300"
-          >
-            Google
-          </button>
-          <button
-            type="button"
-            className="flex-1 py-2 border border-gray-300 rounded font-medium hover:bg-gray-50 transition duration-300"
-          >
-            Apple
-          </button>
-        </div> */}
-
-        <div className="mt-6 text-center">
-          <span className="text-gray-600">Don't have an account? </span>
-          <Link
-            to="/auth/signup"
-            className="text-black font-medium hover:underline"
-          >
-            Sign up
-          </Link>
-        </div>
-      </form>
-    </div>
+    </>
   );
 };
 

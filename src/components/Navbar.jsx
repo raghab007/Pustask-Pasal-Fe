@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { Link } from "react-router";
+import { useContext, useState } from "react";
+import { AuthContext } from "../contexts/AuthContext";
 import {
   Menu,
   X,
@@ -8,16 +10,13 @@ import {
   LogIn,
   UserPlus,
   User2,
+  LogOut
 } from "lucide-react";
 
 const Navbar = () => {
+  const { isAuthenticated, logout } = useContext(AuthContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -25,9 +24,9 @@ const Navbar = () => {
     // Add your search logic here
   };
 
-  // For demo purposes only
-  const toggleLogin = () => {
-    setIsLoggedIn(!isLoggedIn);
+  const handleLogout = () => {
+    logout();
+    setIsMenuOpen(false);
   };
 
   return (
@@ -36,9 +35,9 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <a href="/" className="font-serif text-2xl font-bold tracking-tight hover:text-gray-300 transition-colors duration-200">
+            <Link to="/" className="font-serif text-2xl font-bold tracking-tight hover:text-gray-300 transition-colors duration-200">
               Pustak Ghar
-            </a>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
@@ -51,14 +50,14 @@ const Navbar = () => {
                 { href: "/new-releases", label: "New Releases" },
                 { href: "/deals", label: "Deals" },
               ].map((item) => (
-                <a
+                <Link
                   key={item.href}
-                  href={item.href}
+                  to={item.href}
                   className="text-sm font-medium hover:text-gray-300 transition-colors duration-200 relative group"
                 >
                   {item.label}
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200" />
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -85,51 +84,71 @@ const Navbar = () => {
             </div>
 
             {/* Cart Icon */}
-            <a 
-              href="/cart" 
+            <Link 
+              to="/cart" 
               className="relative hover:text-gray-300 transition-colors duration-200"
             >
               <ShoppingBag size={20} />
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 0
               </span>
-            </a>
+            </Link>
 
-            {/* Conditional rendering based on login status */}
-            {isLoggedIn ? (
-              <a 
-                href="/account" 
-                className="hover:text-gray-300 transition-colors duration-200"
-              >
-                <User size={20} />
-              </a>
+            {/* Conditional rendering based on authentication status */}
+            {isAuthenticated ? (
+              <div className="relative group">
+                <button className="hover:text-gray-300 transition-colors duration-200">
+                  <User size={20} />
+                </button>
+                <div className="absolute right-0 w-48 mt-2 py-2 bg-black border border-gray-700 rounded-lg shadow-xl hidden group-hover:block">
+                  <Link
+                    to="/profile"
+                    className="block px-4 py-2 text-sm text-white hover:bg-gray-800"
+                  >
+                    My Profile
+                  </Link>
+                  <Link
+                    to="/orders"
+                    className="block px-4 py-2 text-sm text-white hover:bg-gray-800"
+                  >
+                    My Orders
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-800 flex items-center"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </button>
+                </div>
+              </div>
             ) : (
               <>
-                <a
-                  href="/auth/login"
+                <Link
+                  to="/auth/login"
                   className="flex items-center space-x-1 hover:text-gray-300 transition-colors duration-200"
                 >
                   <LogIn size={20} />
                   <span className="hidden lg:inline text-sm font-medium">Login</span>
-                </a>
-                <a
-                  href="/auth/signup"
+                </Link>
+                <Link
+                  to="/auth/signup"
                   className="flex items-center space-x-1 bg-white text-black px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors duration-200"
                 >
                   <User2 size={20} />
                   <span className="hidden lg:inline text-sm font-medium">Sign Up</span>
-                </a>
+                </Link>
               </>
             )}
-
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden text-white hover:text-gray-300 focus:outline-none transition-colors duration-200"
-              onClick={toggleMenu}
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
           </div>
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden text-white hover:text-gray-300 focus:outline-none transition-colors duration-200"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
         </div>
       </div>
 
@@ -166,52 +185,65 @@ const Navbar = () => {
             { href: "/new-releases", label: "New Releases" },
             { href: "/deals", label: "Deals" },
           ].map((item) => (
-            <a
+            <Link
               key={item.href}
-              href={item.href}
+              to={item.href}
               className="block px-3 py-2 text-white hover:bg-gray-900 rounded-lg transition-colors duration-200"
+              onClick={() => setIsMenuOpen(false)}
             >
               {item.label}
-            </a>
+            </Link>
           ))}
 
           {/* Login/Signup options for mobile */}
           <div className="border-t border-gray-800 pt-3 mt-3">
-            {isLoggedIn ? (
-              <a
-                href="/account"
-                className="flex items-center px-3 py-2 text-white hover:bg-gray-900 rounded-lg transition-colors duration-200"
-              >
-                <User size={20} className="mr-2" />
-                My Account
-              </a>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/profile"
+                  className="flex items-center px-3 py-2 text-white hover:bg-gray-900 rounded-lg transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User size={20} className="mr-2" />
+                  My Profile
+                </Link>
+                <Link
+                  to="/orders"
+                  className="flex items-center px-3 py-2 text-white hover:bg-gray-900 rounded-lg transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <ShoppingBag size={20} className="mr-2" />
+                  My Orders
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center px-3 py-2 text-red-400 hover:bg-gray-900 rounded-lg transition-colors duration-200"
+                >
+                  <LogOut size={20} className="mr-2" />
+                  Logout
+                </button>
+              </>
             ) : (
               <>
-                <a
-                  href="/auth/login"
+                <Link
+                  to="/login"
                   className="flex items-center px-3 py-2 text-white hover:bg-gray-900 rounded-lg transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   <LogIn size={20} className="mr-2" />
                   Login
-                </a>
-                <a
-                  href="/auth/signup"
+                </Link>
+                <Link
+                  to="/signup"
                   className="flex items-center px-3 py-2 mt-2 bg-white text-black rounded-lg hover:bg-gray-200 transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   <UserPlus size={20} className="mr-2" />
                   Sign Up
-                </a>
+                </Link>
               </>
             )}
           </div>
-
-          {/* Demo toggle button - remove in production */}
-          <button
-            onClick={toggleLogin}
-            className="flex items-center justify-center px-3 py-2 mt-3 text-white bg-gray-800 hover:bg-gray-700 rounded-lg w-full transition-colors duration-200"
-          >
-            Demo: Toggle Login Status
-          </button>
         </div>
       </div>
     </nav>

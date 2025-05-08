@@ -86,7 +86,10 @@ const BooksList = ({ books, setIsAddingBook, setSelectedBook, fetchBooks }) => {
           {books?.length > 0 ? (
             <tbody className="bg-white divide-y divide-gray-200">
               {books.map((book) => (
-                <tr key={book.id} className="hover:bg-gray-50 transition-colors duration-200">
+                <tr
+                  key={book.id}
+                  className="hover:bg-gray-50 transition-colors duration-200"
+                >
                   <td className="py-4 px-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="h-12 w-12 flex-shrink-0 bg-gray-200 rounded-lg overflow-hidden">
@@ -123,15 +126,23 @@ const BooksList = ({ books, setIsAddingBook, setSelectedBook, fetchBooks }) => {
                     {book.isbn}
                   </td>
                   <td className="py-4 px-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">Rs {book.price}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      Rs {book.price}
+                    </div>
                     {book.isOnSale && (
-                      <div className="text-xs text-red-600 font-medium">On Sale</div>
+                      <div className="text-xs text-red-600 font-medium">
+                        On Sale
+                      </div>
                     )}
                   </td>
                   <td className="py-4 px-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      book.stock < 5 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        book.stock < 5
+                          ? "bg-red-100 text-red-800"
+                          : "bg-green-100 text-green-800"
+                      }`}
+                    >
                       {book.stock} in stock
                     </span>
                   </td>
@@ -207,7 +218,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
       ? new Date(book.discountEndDate).toISOString().split("T")[0]
       : "",
     authors: book?.authors || [{ name: "", bio: "" }],
-    genres: book?.genres || [],
+    genres: book?.genres || [""],
   });
 
   const [frontImageFile, setFrontImageFile] = useState(null);
@@ -232,7 +243,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
     "FANTASY_FICTION",
     "NON_FICTION",
     "LOVE_STORY",
-    "BLACK_MAGIC"
+    "BLACK_MAGIC",
   ];
 
   const handleChange = (e) => {
@@ -279,12 +290,29 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
   };
 
   const handleGenreChange = (genre) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       genres: prev.genres.includes(genre)
-        ? prev.genres.filter(g => g !== genre)
-        : [...prev.genres, genre]
+        ? prev.genres.filter((g) => g !== genre)
+        : [...prev.genres, genre],
     }));
+  };
+
+  const addGenre = () => {
+    setFormData({
+      ...formData,
+      genres: [...formData.genres, ""],
+    });
+  };
+
+  const removeGenre = (index) => {
+    if (formData.genres.length <= 1) return;
+    const updatedGenres = [...formData.genres];
+    updatedGenres.splice(index, 1);
+    setFormData({
+      ...formData,
+      genres: updatedGenres,
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -301,7 +329,10 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
       formDataToSend.append("Price", formData.price);
       formDataToSend.append("Stock", formData.stock);
       if (formData.publishedDate) {
-        formDataToSend.append("PublishedDate", new Date(formData.publishedDate).toISOString());
+        formDataToSend.append(
+          "PublishedDate",
+          new Date(formData.publishedDate).toISOString()
+        );
       }
       formDataToSend.append("Publisher", formData.publisher);
       formDataToSend.append("ReleaseStatus", formData.releaseStatus);
@@ -310,12 +341,18 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
 
       // Append genres
       formData.genres.forEach((genre, index) => {
-        formDataToSend.append(`Genres[${index}]`, genre);
+        formDataToSend.append(`Genres[${index}].GenreType`, genre);
       });
 
       if (formData.isOnSale) {
-        formDataToSend.append("DiscountStartDate", new Date(formData.discountStartDate).toISOString());
-        formDataToSend.append("DiscountEndDate", new Date(formData.discountEndDate).toISOString());
+        formDataToSend.append(
+          "DiscountStartDate",
+          new Date(formData.discountStartDate).toISOString()
+        );
+        formDataToSend.append(
+          "DiscountEndDate",
+          new Date(formData.discountEndDate).toISOString()
+        );
       }
 
       // Append authors as JSON strings
@@ -325,6 +362,8 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
           formDataToSend.append(`Authors[${index}].Bio`, author.bio);
         }
       });
+
+      console.log(formDataToSend);
 
       // Append files if they exist
       if (frontImageFile) formDataToSend.append("FrontImage", frontImageFile);
@@ -528,7 +567,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
                       htmlFor={genre}
                       className="ml-2 block text-sm text-gray-700"
                     >
-                      {genre.replace(/_/g, ' ')}
+                      {genre.replace(/_/g, " ")}
                     </label>
                   </div>
                 ))}
@@ -890,7 +929,7 @@ export const BooksManagement = () => {
             setSelectedBook={setSelectedBook}
             fetchBooks={fetchBooks}
           />
-          
+
           {/* Enhanced Pagination Controls */}
           <div className="flex justify-center items-center space-x-4 mt-8">
             <button
@@ -898,26 +937,38 @@ export const BooksManagement = () => {
               disabled={currentPage === 1}
               className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Previous
             </button>
-            
+
             <div className="flex items-center space-x-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-all duration-200 ${
-                    currentPage === page
-                      ? 'bg-black text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-all duration-200 ${
+                      currentPage === page
+                        ? "bg-black text-white"
+                        : "bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
             </div>
 
             <button
@@ -926,8 +977,18 @@ export const BooksManagement = () => {
               className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
             >
               Next
-              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              <svg
+                className="w-5 h-5 ml-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           </div>

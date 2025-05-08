@@ -18,18 +18,18 @@ const BookStatistics = ({ stats }) => {
         {stats.map((item) => (
           <div
             key={item.id}
-            className="bg-white overflow-hidden shadow rounded-lg"
+            className="bg-white overflow-hidden shadow-lg rounded-lg transform transition-all duration-300 hover:scale-105"
           >
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
-                <div className="flex-shrink-0 bg-gray-100 rounded-md p-3">
+                <div className="flex-shrink-0 bg-black rounded-md p-3 text-white">
                   {item.icon}
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dt className="text-sm font-medium text-gray-500 truncate">
                     {item.name}
                   </dt>
-                  <dd className="text-2xl font-semibold text-gray-900">
+                  <dd className="text-2xl font-bold text-gray-900">
                     {item.stat}
                   </dd>
                 </div>
@@ -45,130 +45,141 @@ const BookStatistics = ({ stats }) => {
 const BooksList = ({ books, setIsAddingBook, setSelectedBook, fetchBooks }) => {
   return (
     <div className="overflow-x-auto">
-      <div className="flex justify-between mb-6">
+      <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Books Inventory</h2>
         <button
           onClick={() => {
             setSelectedBook(null);
             setIsAddingBook(true);
           }}
-          className="flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition"
+          className="flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 shadow-md"
         >
           <Plus size={18} className="mr-2" />
           Add New Book
         </button>
       </div>
 
-      <table className="min-w-full bg-white border border-gray-200 shadow-md rounded-lg overflow-hidden">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
-              Title
-            </th>
-            <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
-              Authors
-            </th>
-            <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
-              ISBN
-            </th>
-            <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
-              Price
-            </th>
-            <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
-              Stock
-            </th>
-            <th className="py-3 px-4 text-left text-xs font-medium text-gray-600 uppercase tracking-wider border-b">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        {books?.length > 0 ? (
-          <tbody className="divide-y divide-gray-200">
-            {books.map((book) => (
-              <tr key={book.id} className="hover:bg-gray-50">
-                <td className="py-4 px-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 flex-shrink-0 bg-gray-200 rounded-md flex items-center justify-center">
-                      {book.frontImage ? (
-                        <img
-                          src={`http://localhost:5001/api/Images/Books/${book.frontImage}`}
-                          alt={book.title}
-                          className="h-full w-full object-cover rounded-md"
-                        />
-                      ) : (
-                        <BookOpen size={16} className="text-gray-600" />
-                      )}
-                    </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {book.title}
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Title
+              </th>
+              <th className="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Authors
+              </th>
+              <th className="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                ISBN
+              </th>
+              <th className="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Price
+              </th>
+              <th className="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Stock
+              </th>
+              <th className="py-3 px-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          {books?.length > 0 ? (
+            <tbody className="bg-white divide-y divide-gray-200">
+              {books.map((book) => (
+                <tr key={book.id} className="hover:bg-gray-50 transition-colors duration-200">
+                  <td className="py-4 px-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="h-12 w-12 flex-shrink-0 bg-gray-200 rounded-lg overflow-hidden">
+                        {book.frontImage ? (
+                          <img
+                            src={`http://localhost:5001/api/Images/Books/${book.frontImage}`}
+                            alt={book.title}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-gray-100">
+                            <BookOpen size={20} className="text-gray-400" />
+                          </div>
+                        )}
                       </div>
-                      {book.isBestSeller && (
-                        <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          Bestseller
-                        </span>
-                      )}
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {book.title}
+                        </div>
+                        {book.isBestSeller && (
+                          <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Bestseller
+                          </span>
+                        )}
+                      </div>
                     </div>
+                  </td>
+                  <td className="py-4 px-4">
+                    <div className="text-sm text-gray-900">
+                      {book.authors?.map((author) => author.name).join(", ")}
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">
+                    {book.isbn}
+                  </td>
+                  <td className="py-4 px-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">Rs {book.price}</div>
+                    {book.isOnSale && (
+                      <div className="text-xs text-red-600 font-medium">On Sale</div>
+                    )}
+                  </td>
+                  <td className="py-4 px-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      book.stock < 5 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {book.stock} in stock
+                    </span>
+                  </td>
+                  <td className="py-4 px-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => {
+                        setSelectedBook(book);
+                        setIsAddingBook(true);
+                      }}
+                      className="text-indigo-600 hover:text-indigo-900 mr-4 transition-colors duration-200"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (
+                          window.confirm(
+                            "Are you sure you want to delete this book?"
+                          )
+                        ) {
+                          await axios.delete(
+                            `http://localhost:5001/api/Books/${book.id}`
+                          );
+                          fetchBooks();
+                        }
+                      }}
+                      className="text-red-600 hover:text-red-900 transition-colors duration-200"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          ) : (
+            <tbody>
+              <tr>
+                <td colSpan="6" className="py-8 text-center text-gray-500">
+                  <div className="flex flex-col items-center">
+                    <BookOpen size={48} className="text-gray-400 mb-2" />
+                    <p className="text-lg">No books found</p>
                   </div>
-                </td>
-                <td className="py-4 px-4">
-                  <div className="text-sm text-gray-900">
-                    {book.authors?.map((author) => author.name).join(", ")}
-                  </div>
-                </td>
-                <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">
-                  {book.isbn}
-                </td>
-                <td className="py-4 px-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">Rs {book.price}</div>
-                  {book.isOnSale && (
-                    <div className="text-xs text-red-600">On Sale</div>
-                  )}
-                </td>
-                <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">
-                  {book.stock}
-                </td>
-                <td className="py-4 px-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    onClick={() => {
-                      setSelectedBook(book);
-                      setIsAddingBook(true);
-                    }}
-                    className="text-gray-600 hover:text-gray-900 mr-3"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (
-                        window.confirm(
-                          "Are you sure you want to delete this book?"
-                        )
-                      ) {
-                        await axios.delete(
-                          `http://localhost:5001/api/Books/${book.id}`
-                        );
-                        fetchBooks();
-                      }
-                    }}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        ) : (
-          <tbody>
-            <tr>
-              <td colSpan="6" className="py-4 text-center text-gray-500">
-                No books found
-              </td>
-            </tr>
-          </tbody>
-        )}
-      </table>
+            </tbody>
+          )}
+        </table>
+      </div>
     </div>
   );
 };
@@ -196,11 +207,33 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
       ? new Date(book.discountEndDate).toISOString().split("T")[0]
       : "",
     authors: book?.authors || [{ name: "", bio: "" }],
+    genres: book?.genres || [],
   });
 
   const [frontImageFile, setFrontImageFile] = useState(null);
   const [backImageFile, setBackImageFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const genreOptions = [
+    "THRILLER",
+    "FANTASY",
+    "ROMANCE",
+    "COMEDY",
+    "ADVENTURE",
+    "MYSTHERY",
+    "HISTORY",
+    "SCIENCE_FICTION",
+    "HORROR",
+    "ACTION",
+    "DRAMA",
+    "MUSIC",
+    "POETRY",
+    "SPORTS",
+    "FANTASY_FICTION",
+    "NON_FICTION",
+    "LOVE_STORY",
+    "BLACK_MAGIC"
+  ];
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -245,6 +278,15 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
     }
   };
 
+  const handleGenreChange = (genre) => {
+    setFormData(prev => ({
+      ...prev,
+      genres: prev.genres.includes(genre)
+        ? prev.genres.filter(g => g !== genre)
+        : [...prev.genres, genre]
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -259,16 +301,21 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
       formDataToSend.append("Price", formData.price);
       formDataToSend.append("Stock", formData.stock);
       if (formData.publishedDate) {
-        formDataToSend.append("PublishedDate", formData.publishedDate);
+        formDataToSend.append("PublishedDate", new Date(formData.publishedDate).toISOString());
       }
       formDataToSend.append("Publisher", formData.publisher);
       formDataToSend.append("ReleaseStatus", formData.releaseStatus);
       formDataToSend.append("IsOnSale", formData.isOnSale);
       formDataToSend.append("IsBestSeller", formData.isBestSeller);
 
+      // Append genres
+      formData.genres.forEach((genre, index) => {
+        formDataToSend.append(`Genres[${index}]`, genre);
+      });
+
       if (formData.isOnSale) {
-        formDataToSend.append("DiscountStartDate", formData.discountStartDate);
-        formDataToSend.append("DiscountEndDate", formData.discountEndDate);
+        formDataToSend.append("DiscountStartDate", new Date(formData.discountStartDate).toISOString());
+        formDataToSend.append("DiscountEndDate", new Date(formData.discountEndDate).toISOString());
       }
 
       // Append authors as JSON strings
@@ -460,6 +507,32 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-black focus:border-black"
                 disabled={isLoading}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Genres *
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {genreOptions.map((genre) => (
+                  <div key={genre} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={genre}
+                      checked={formData.genres.includes(genre)}
+                      onChange={() => handleGenreChange(genre)}
+                      className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+                      disabled={isLoading}
+                    />
+                    <label
+                      htmlFor={genre}
+                      className="ml-2 block text-sm text-gray-700"
+                    >
+                      {genre.replace(/_/g, ' ')}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -737,6 +810,9 @@ export const BooksManagement = () => {
   const [books, setBooks] = useState([]);
   const [isAddingBook, setIsAddingBook] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState([
     { id: 1, name: "Total Books", stat: "0", icon: <BookOpen size={20} /> },
     { id: 2, name: "Books Sold", stat: "0", icon: <ShoppingCart size={20} /> },
@@ -746,12 +822,15 @@ export const BooksManagement = () => {
 
   const fetchBooks = async () => {
     try {
-      const response = await axios.get("http://localhost:5001/api/Books");
+      const response = await axios.get(
+        `http://localhost:5001/api/Books?page=${currentPage}&pageSize=${pageSize}`
+      );
       setBooks(response.data.books);
+      setTotalPages(Math.ceil(response.data.totalCount / pageSize));
 
       // Update stats based on fetched data
       setStats([
-        { ...stats[0], stat: response.data.books.length?.toString() },
+        { ...stats[0], stat: response.data.totalCount?.toString() },
         {
           ...stats[1],
           stat: response.data.books
@@ -778,7 +857,11 @@ export const BooksManagement = () => {
 
   useEffect(() => {
     fetchBooks();
-  }, []);
+  }, [currentPage]); // Add currentPage as dependency
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
   const handleSave = () => {
     setIsAddingBook(false);
@@ -807,6 +890,47 @@ export const BooksManagement = () => {
             setSelectedBook={setSelectedBook}
             fetchBooks={fetchBooks}
           />
+          
+          {/* Enhanced Pagination Controls */}
+          <div className="flex justify-center items-center space-x-4 mt-8">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              </svg>
+              Previous
+            </button>
+            
+            <div className="flex items-center space-x-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-all duration-200 ${
+                    currentPage === page
+                      ? 'bg-black text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
+            >
+              Next
+              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </>
       )}
     </div>

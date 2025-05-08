@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Heart, ShoppingCart, Star } from "lucide-react";
-import BookImg from "../assets/book.jpg";
+import { Heart, ShoppingCart, Star, Eye } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export default function BookCard({
   id = 1,
@@ -10,11 +10,12 @@ export default function BookCard({
   originalPrice = 29.99,
   rating = 4.5,
   reviewCount = 142,
-  coverImage = "/api/placeholder/240/350",
   isNewRelease = true,
   isBestseller = false,
+  coverImage 
 }) {
   const [isWishlist, setIsWishlist] = useState(false);
+  const navigate = useNavigate();
 
   const discount = originalPrice
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
@@ -28,6 +29,10 @@ export default function BookCard({
     setIsWishlist(!isWishlist);
   };
 
+  const handleViewDetails = () => {
+    navigate(`/books/${id}`);
+  };
+
   return (
     <div className="max-w-xs rounded overflow-hidden shadow-lg bg-white transition-all duration-300 hover:shadow-xl">
       {/* Book cover with badges */}
@@ -35,7 +40,8 @@ export default function BookCard({
         <img
           src={`http://localhost:5001/api/Images/Books/${coverImage}`}
           alt={`${title} by ${author}`}
-          className="w-full h-64 object-cover"
+          className="w-full h-64 object-cover cursor-pointer"
+          onClick={handleViewDetails}
         />
 
         {/* Discount badge */}
@@ -73,7 +79,12 @@ export default function BookCard({
 
       {/* Book info */}
       <div className="px-4 py-4">
-        <div className="font-bold text-lg mb-1 line-clamp-1">{title}</div>
+        <div 
+          className="font-bold text-lg mb-1 line-clamp-1 cursor-pointer hover:text-gray-700"
+          onClick={handleViewDetails}
+        >
+          {title}
+        </div>
         <p className="text-gray-600 text-sm mb-2">{author}</p>
 
         {/* Ratings */}
@@ -94,10 +105,10 @@ export default function BookCard({
           <span className="text-gray-600 text-xs ml-1">({reviewCount})</span>
         </div>
 
-        {/* Price */}
+        {/* Price and Actions */}
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <span className="font-bold text-lg">${price.toFixed(2)}</span>
+            <span className="font-bold text-lg">Rs {price.toFixed(2)}</span>
             {originalPrice && (
               <span className="text-gray-500 text-sm line-through ml-2">
                 Rs {originalPrice.toFixed(2)}
@@ -105,13 +116,24 @@ export default function BookCard({
             )}
           </div>
 
-          {/* Add to cart button */}
-          <button
-            onClick={handleAddToCart}
-            className="bg-black text-white p-2 rounded hover:bg-gray-800 transition-colors"
-          >
-            <ShoppingCart size={18} />
-          </button>
+          <div className="flex items-center space-x-2">
+            {/* View Details button */}
+            <button
+              onClick={handleViewDetails}
+              className="bg-gray-100 text-black p-2 rounded hover:bg-gray-200 transition-colors"
+              title="View Details"
+            >
+              <Eye size={18} />
+            </button>
+
+            {/* Add to cart button */}
+            <button
+              onClick={handleAddToCart}
+              className="bg-black text-white p-2 rounded hover:bg-gray-800 transition-colors"
+            >
+              <ShoppingCart size={18} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

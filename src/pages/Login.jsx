@@ -137,26 +137,8 @@ const Login = () => {
             {isLoading ? "Signing in..." : "Sign In"}
           </button>
 
-          <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-gray-300"></div>
-            <span className="mx-4 text-sm text-gray-500">or continue with</span>
-            <div className="flex-1 border-t border-gray-300"></div>
-          </div>
+      
 
-          <div className="flex space-x-4">
-            <button
-              type="button"
-              className="flex-1 py-2 border border-gray-300 rounded font-medium hover:bg-gray-50 transition duration-300"
-            >
-              Google
-            </button>
-            <button
-              type="button"
-              className="flex-1 py-2 border border-gray-300 rounded font-medium hover:bg-gray-50 transition duration-300"
-            >
-              Apple
-            </button>
-          </div>
 
           <div className="mt-6 text-center">
             <span className="text-gray-600">Don't have an account? </span>

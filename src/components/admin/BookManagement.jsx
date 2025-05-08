@@ -8,6 +8,9 @@ import {
   Upload,
   X,
   UserPlus,
+  MessageSquare,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import axios from "axios";
 
@@ -845,7 +848,228 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
   );
 };
 
+const ReviewsManagement = () => {
+  const [reviews, setReviews] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [stats, setStats] = useState([
+    { id: 1, name: "Total Reviews", stat: "0", icon: <MessageSquare size={20} /> },
+    { id: 2, name: "Positive Reviews", stat: "0", icon: <ThumbsUp size={20} /> },
+    { id: 3, name: "Negative Reviews", stat: "0", icon: <ThumbsDown size={20} /> },
+    { id: 4, name: "Average Rating", stat: "0", icon: <Star size={20} /> },
+  ]);
+
+  const fetchReviews = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5001/api/Reviews?page=${currentPage}&pageSize=${pageSize}`
+      );
+      setReviews(response.data.reviews);
+      setTotalPages(Math.ceil(response.data.totalCount / pageSize));
+
+      // Update stats
+      const totalReviews = response.data.totalCount;
+      const positiveReviews = response.data.reviews.filter(review => review.rating >= 4).length;
+      const negativeReviews = response.data.reviews.filter(review => review.rating <= 2).length;
+      const averageRating = response.data.reviews.reduce((acc, review) => acc + review.rating, 0) / totalReviews;
+
+      setStats([
+        { ...stats[0], stat: totalReviews.toString() },
+        { ...stats[1], stat: positiveReviews.toString() },
+        { ...stats[2], stat: negativeReviews.toString() },
+        { ...stats[3], stat: averageRating.toFixed(1) },
+      ]);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, [currentPage]);
+
+  const handleDeleteReview = async (reviewId) => {
+    if (window.confirm("Are you sure you want to delete this review?")) {
+      try {
+        await axios.delete(`http://localhost:5001/api/Reviews/${reviewId}`);
+        fetchReviews();
+      } catch (error) {
+        console.error("Error deleting review:", error);
+        alert("Failed to delete review");
+      }
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  return (
+    <div className="space-y-6">
+      <BookStatistics stats={stats} />
+      
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-800">Reviews Management</h2>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Book
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Rating
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Comment
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {reviews.map((review) => (
+                <tr key={review.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 flex-shrink-0">
+                        {review.book?.frontImage ? (
+                          <img
+                            src={`http://localhost:5001/api/Images/Books/${review.book.frontImage}`}
+                            alt={review.book.title}
+                            className="h-10 w-10 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 bg-gray-200 rounded flex items-center justify-center">
+                            <BookOpen size={20} className="text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {review.book?.title}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{review.user?.name}</div>
+                    <div className="text-sm text-gray-500">{review.user?.email}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          size={16}
+                          className={`${
+                            i < review.rating ? "text-yellow-400" : "text-gray-300"
+                          }`}
+                          fill={i < review.rating ? "currentColor" : "none"}
+                        />
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm text-gray-900 max-w-xs truncate">
+                      {review.comment}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(review.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button
+                      onClick={() => handleDeleteReview(review.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex justify-center items-center space-x-4 py-4 border-t border-gray-200">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
+          >
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Previous
+          </button>
+
+          <div className="flex items-center space-x-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-all duration-200 ${
+                  currentPage === page
+                    ? "bg-black text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
+          >
+            Next
+            <svg
+              className="w-5 h-5 ml-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const BooksManagement = () => {
+  const [activeTab, setActiveTab] = useState("books");
   const [books, setBooks] = useState([]);
   const [isAddingBook, setIsAddingBook] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
@@ -910,89 +1134,119 @@ export const BooksManagement = () => {
 
   return (
     <div className="space-y-6">
-      {isAddingBook ? (
-        <BookForm
-          book={selectedBook}
-          onSave={handleSave}
-          onCancel={() => {
-            setIsAddingBook(false);
-            setSelectedBook(null);
-          }}
-          fetchBooks={fetchBooks}
-        />
-      ) : (
-        <>
-          <BookStatistics stats={stats} />
-          <BooksList
-            books={books}
-            setIsAddingBook={setIsAddingBook}
-            setSelectedBook={setSelectedBook}
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab("books")}
+            className={`${
+              activeTab === "books"
+                ? "border-black text-black"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Books
+          </button>
+          <button
+            onClick={() => setActiveTab("reviews")}
+            className={`${
+              activeTab === "reviews"
+                ? "border-black text-black"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Reviews
+          </button>
+        </nav>
+      </div>
+
+      {activeTab === "books" ? (
+        isAddingBook ? (
+          <BookForm
+            book={selectedBook}
+            onSave={handleSave}
+            onCancel={() => {
+              setIsAddingBook(false);
+              setSelectedBook(null);
+            }}
             fetchBooks={fetchBooks}
           />
+        ) : (
+          <>
+            <BookStatistics stats={stats} />
+            <BooksList
+              books={books}
+              setIsAddingBook={setIsAddingBook}
+              setSelectedBook={setSelectedBook}
+              fetchBooks={fetchBooks}
+            />
 
-          {/* Enhanced Pagination Controls */}
-          <div className="flex justify-center items-center space-x-4 mt-8">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
-            >
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {/* Enhanced Pagination Controls */}
+            <div className="flex justify-center items-center space-x-4 mt-8">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Previous
-            </button>
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                Previous
+              </button>
 
-            <div className="flex items-center space-x-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-all duration-200 ${
-                      currentPage === page
-                        ? "bg-black text-white"
-                        : "bg-white text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                )
-              )}
+              <div className="flex items-center space-x-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-all duration-200 ${
+                        currentPage === page
+                          ? "bg-black text-white"
+                          : "bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
+                )}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
+              >
+                Next
+                <svg
+                  className="w-5 h-5 ml-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
             </div>
-
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
-            >
-              Next
-              <svg
-                className="w-5 h-5 ml-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
-          </div>
-        </>
+          </>
+        )
+      ) : (
+        <ReviewsManagement />
       )}
     </div>
   );

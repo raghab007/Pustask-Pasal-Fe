@@ -173,6 +173,7 @@ const Signup = () => {
                       id="firstName"
                       value={formData.firstName}
                       onChange={handleChange}
+                      placeholder="Enter your first name"
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         errors.firstName ? "border-red-300" : "border-gray-300"
                       } rounded-md focus:outline-none focus:ring-black focus:border-black text-base`}
@@ -198,6 +199,7 @@ const Signup = () => {
                       id="lastName"
                       value={formData.lastName}
                       onChange={handleChange}
+                      placeholder="Enter your last name"
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         errors.lastName ? "border-red-300" : "border-gray-300"
                       } rounded-md focus:outline-none focus:ring-black focus:border-black text-base`}
@@ -225,6 +227,7 @@ const Signup = () => {
                       id="email"
                       value={formData.email}
                       onChange={handleChange}
+                      placeholder="Enter your email address"
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         errors.email ? "border-red-300" : "border-gray-300"
                       } rounded-md focus:outline-none focus:ring-black focus:border-black text-base`}
@@ -250,6 +253,7 @@ const Signup = () => {
                       id="userName"
                       value={formData.userName}
                       onChange={handleChange}
+                      placeholder="Enter your username"
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         errors.userName ? "border-red-300" : "border-gray-300"
                       } rounded-md focus:outline-none focus:ring-black focus:border-black text-base`}
@@ -279,6 +283,7 @@ const Signup = () => {
                       max="100"
                       value={formData.age}
                       onChange={handleChange}
+                      placeholder="Enter your age"
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         errors.age ? "border-red-300" : "border-gray-300"
                       } rounded-md focus:outline-none focus:ring-black focus:border-black text-base`}
@@ -304,6 +309,7 @@ const Signup = () => {
                       id="password"
                       value={formData.password}
                       onChange={handleChange}
+                      placeholder="Enter your password"
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         errors.password ? "border-red-300" : "border-gray-300"
                       } rounded-md focus:outline-none focus:ring-black focus:border-black text-base`}
@@ -330,6 +336,7 @@ const Signup = () => {
                     id="address"
                     value={formData.address}
                     onChange={handleChange}
+                    placeholder="Enter your address"
                     className={`block w-full pl-10 pr-3 py-2.5 border ${
                       errors.address ? "border-red-300" : "border-gray-300"
                     } rounded-md focus:outline-none focus:ring-black focus:border-black text-base`}

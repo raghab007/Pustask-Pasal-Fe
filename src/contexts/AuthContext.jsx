@@ -1,10 +1,12 @@
 import { createContext, useEffect, useState } from "react";
+import axios from "axios";
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     const checkTokenExpiration = () => {
         const token = localStorage.getItem("token");
@@ -26,22 +28,56 @@ export const AuthProvider = ({ children }) => {
         return true;
     };
 
+
+    const initializeAuth = async () => {
+        const token = localStorage.getItem("token");
+        if (token && checkTokenExpiration()) {
+            try {
+                // Fetch user data using the token
+                const response = await axios.get("http://localhost:5001/api/Auth/me", {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                setUser(response.data);
+                setIsAuthenticated(true);
+            } catch (error) {
+                console.error("Error fetching user data:", error);
+                logout();
+            }
+        }
+        setLoading(false);
+    };
+
     useEffect(() => {
-        // Check token expiration on mount
-        checkTokenExpiration();
+        // Initialize auth state on mount
+        initializeAuth();
 
-        // Set up interval to check token expiration every minute
-        const interval = setInterval(() => {
-            checkTokenExpiration();
-        }, 60000); // Check every minute
+        // // Set up interval to check token expiration
+        // const interval = setInterval(() => {
+        //     checkTokenExpiration();
+        // }, 60000); // Check every minute
 
-        return () => clearInterval(interval);
+        // return () => clearInterval(interval);
     }, []);
 
-    const login = (token, expiration) => {
+    const login = async (token, expiration) => {
         localStorage.setItem("token", token);
         localStorage.setItem("tokenExpiration", expiration);
-        setIsAuthenticated(true);
+        
+        try {
+            // Fetch user data after login
+            const response = await axios.get("http://localhost:5001/api/Auth/me", {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            setUser(response.data);
+            setIsAuthenticated(true);
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+            logout();
+        }
     };
 
     const logout = () => {
@@ -55,6 +91,14 @@ export const AuthProvider = ({ children }) => {
         const token = localStorage.getItem("token");
         return token ? { Authorization: `Bearer ${token}` } : {};
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+            </div>
+        );
+    }
 
     return (
         <AuthContext.Provider 

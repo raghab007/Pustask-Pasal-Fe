@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router";
 import {
   Star,
@@ -14,13 +14,22 @@ import {
   ChevronRight,
   Info,
   User,
-  BookText
+  BookText,
+  Eye,
+  MessageSquare,
+  ThumbsUp,
+  ThumbsDown,
+  Plus,
+  Minus
 } from "lucide-react";
 import axios from "axios";
+import { AuthContext } from "../contexts/AuthContext";
+import { addToCart } from "../utils/cartUtils";
 
 export default function BookDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated, getAuthHeader } = useContext(AuthContext);
   const [book, setBook] = useState(null);
   const [isWishlist, setIsWishlist] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -28,6 +37,8 @@ export default function BookDetails() {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("description");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState(null);
 
   useEffect(() => {
     const fetchBookDetails = async () => {
@@ -44,20 +55,34 @@ export default function BookDetails() {
     fetchBookDetails();
   }, [id]);
 
-  const handleAddToCart = () => {
-    // TODO: Implement cart functionality
-    alert(`Added ${quantity} copy/copies of "${book.title}" to cart`);
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      navigate("/auth/login", { state: { from: `/books/${id}` } });
+      return;
+    }
+
+    setAddingToCart(true);
+    setCartMessage(null);
+
+    const result = await addToCart(book.id, quantity, getAuthHeader);
+
+    if (result.success) {
+      setCartMessage({ type: "success", text: "Added to cart successfully!" });
+      setQuantity(1);
+    } else {
+      setCartMessage({ type: "error", text: result.error });
+    }
+
+    setAddingToCart(false);
   };
 
   const handleToggleWishlist = () => {
     setIsWishlist(!isWishlist);
   };
 
-  const handleQuantityChange = (e) => {
-    const value = parseInt(e.target.value);
-    if (value > 0 && value <= book.stock) {
-      setQuantity(value);
-    }
+  const handleQuantityChange = (newQuantity) => {
+    if (newQuantity < 1 || newQuantity > book.stock) return;
+    setQuantity(newQuantity);
   };
 
   const getBookImages = () => {
@@ -316,17 +341,27 @@ export default function BookDetails() {
                       min="1"
                       max={book.stock}
                       value={quantity}
-                      onChange={handleQuantityChange}
+                      onChange={(e) => handleQuantityChange(parseInt(e.target.value))}
                       className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
                     />
                   </div>
                   <div className="flex items-center space-x-4">
                     <button
                       onClick={handleAddToCart}
-                      className="flex-1 bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center"
+                      disabled={addingToCart || !book.isAvailable}
+                      className="flex-1 bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <ShoppingCart size={20} className="mr-2" />
-                      Add to Cart
+                      {addingToCart ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                          Adding to Cart...
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart size={20} className="mr-2" />
+                          Add to Cart
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={handleToggleWishlist}
@@ -458,6 +493,18 @@ export default function BookDetails() {
           </div>
         </div>
       </div>
+
+      {cartMessage && (
+        <div
+          className={`mt-4 p-4 rounded-md ${
+            cartMessage.type === "success"
+              ? "bg-green-50 text-green-800"
+              : "bg-red-50 text-red-800"
+          }`}
+        >
+          {cartMessage.text}
+        </div>
+      )}
     </div>
   );
 }

@@ -221,7 +221,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
       ? new Date(book.discountEndDate).toISOString().split("T")[0]
       : "",
     authors: book?.authors || [{ name: "", bio: "" }],
-    genres: book?.genres || [""],
+    genres: book?.genres?.map(g => g.genreType) || [],
   });
 
   const [frontImageFile, setFrontImageFile] = useState(null);
@@ -358,7 +358,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
         );
       }
 
-      // Append authors as JSON strings
+      // Append authors
       formData.authors.forEach((author, index) => {
         formDataToSend.append(`Authors[${index}].Name`, author.name);
         if (author.bio) {
@@ -366,7 +366,21 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
         }
       });
 
-      console.log(formDataToSend);
+      // Log the form data for debugging
+      console.log("Form Data being sent:", {
+        title: formData.title,
+        isbn: formData.isbn,
+        description: formData.description,
+        price: formData.price,
+        stock: formData.stock,
+        publishedDate: formData.publishedDate,
+        publisher: formData.publisher,
+        releaseStatus: formData.releaseStatus,
+        isOnSale: formData.isOnSale,
+        isBestSeller: formData.isBestSeller,
+        genres: formData.genres,
+        authors: formData.authors
+      });
 
       // Append files if they exist
       if (frontImageFile) formDataToSend.append("FrontImage", frontImageFile);
@@ -399,6 +413,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
       onSave();
     } catch (error) {
       console.error("Error saving book:", error);
+      console.error("Error response:", error.response?.data);
       alert(`Error: ${error.response?.data?.message || error.message}`);
     } finally {
       setIsLoading(false);

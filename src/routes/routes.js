@@ -7,9 +7,9 @@ import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import AuthLayout from "../layouts/AuthLayout";
 import AdminLayout from "../layouts/admin/AdminLayout";
-import { Component } from "react";
 import { BooksManagement } from "../components/admin/BookManagement";
 import BookDetails from "../components/BookDetails";
+import Cart from "../pages/Cart";
 
 const routes = createBrowserRouter([
   {
@@ -28,19 +28,10 @@ const routes = createBrowserRouter([
           { path: "signup", Component: Signup },
         ],
       },
+      { path: 'cart', Component: Cart }
 
-
-      {
-        //   path: "concerts",
-        //   children: [
-        //     { index: true, Component: ConcertsHome },
-        //     { path: ":city", Component: ConcertsCity },
-        //     { path: "trending", Component: ConcertsTrending },
-        //   ],
-      },
     ],
   },
-
   {
     path: "/admin",
     Component: AdminLayout,

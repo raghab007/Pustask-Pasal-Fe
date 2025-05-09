@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { Heart, ShoppingCart, Star, Eye } from "lucide-react";
+import { useContext, useState } from "react";
+import { ShoppingCart, Star, Eye, Heart } from "lucide-react";
 import { useNavigate } from "react-router";
+import axios from "axios";
+import { toast } from "react-toastify";
+import AuthContext from "../contexts/AuthContext";
 
 export default function BookCard({
-  id = 1,
+  id,
   title = "The Silent Echo",
   author = "Elizabeth Marlowe",
   price = 24.99,
@@ -12,21 +15,78 @@ export default function BookCard({
   reviewCount = 142,
   isNewRelease = true,
   isBestseller = false,
-  coverImage 
+  coverImage,
+  isInFavorites = false
 }) {
-  const [isWishlist, setIsWishlist] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(isInFavorites);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { user, isAuthenticated, login,logout, checkTokenExpiration } = useContext(AuthContext);
 
   const discount = originalPrice
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0;
 
   const handleAddToCart = () => {
-    alert(`Added "${title}" to cart`);
+    toast.info(`Added "${title}" to cart`);
   };
 
-  const handleToggleWishlist = () => {
-    setIsWishlist(!isWishlist);
+  const handleToggleFavorite = async () => {
+    console.log("Clicked")
+    // if (!checkTokenExpiration()) {
+    //   toast.error("Your session has expired. Please login again.");
+    //   return;
+    // }
+
+    if (!isAuthenticated) {
+      toast.error("Please login to add to favorites");
+      navigate("/login");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (isFavorite) {
+        // Remove from favorites
+        await axios.delete(`http://localhost:5001/api/favourites/remove/${id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        });
+        toast.success("Removed from favorites");
+      } else {
+        // Add to favorites
+        console.log(id)
+       const response =  await axios.post(
+          "http://localhost:5001/api/Favourites/add",
+          { bookId: id },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
+          }
+        );
+        toast.success("Added to favorites");
+        console.log(response)
+
+      }
+
+
+      setIsFavorite(!isFavorite);
+    } catch (error) {
+      console.error("Error updating favorites:", error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.title || 
+                          "Failed to update favorites";
+      toast.error(errorMessage);
+      
+      // If unauthorized, log the user out
+      if (error.response?.status === 401) {
+        logout();
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleViewDetails = () => {
@@ -64,22 +124,11 @@ export default function BookCard({
             BESTSELLER
           </div>
         )}
-
-        {/* Wishlist button */}
-        <button
-          onClick={handleToggleWishlist}
-          className="absolute bottom-2 right-2 p-2 rounded-full bg-white shadow-md hover:bg-gray-100"
-        >
-          <Heart
-            size={20}
-            className={isWishlist ? "fill-black text-black" : "text-gray-600"}
-          />
-        </button>
       </div>
 
       {/* Book info */}
       <div className="px-4 py-4">
-        <div 
+        <div
           className="font-bold text-lg mb-1 line-clamp-1 cursor-pointer hover:text-gray-700"
           onClick={handleViewDetails}
         >
@@ -96,7 +145,7 @@ export default function BookCard({
                 size={16}
                 className={
                   i < Math.floor(rating)
-                    ? "fill-black text-black"
+                    ? "fill-yellow-400 text-yellow-400"
                     : "text-gray-300"
                 }
               />
@@ -124,6 +173,24 @@ export default function BookCard({
               title="View Details"
             >
               <Eye size={18} />
+            </button>
+
+            {/* Add to favorites button */}
+            <button
+              onClick={handleToggleFavorite}
+              disabled={isLoading}
+              className={`p-2 rounded transition-colors ${
+                isFavorite
+                  ? "bg-red-100 text-red-500 hover:bg-red-200"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Heart 
+                size={18} 
+                className={isFavorite ? "fill-red-500" : ""} 
+              />
+              Add to favorite
             </button>
 
             {/* Add to cart button */}

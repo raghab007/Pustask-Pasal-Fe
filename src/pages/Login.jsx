@@ -59,17 +59,19 @@ const Login = () => {
 
   return (
     <>
-      {/* Success Popup */}
+      {/* Enhanced Success Popup */}
       {showSuccess && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
-          <div className="bg-white p-8 rounded-lg shadow-xl transform transition-all duration-300 scale-100 animate-fade-in-up relative z-10">
+          <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm"></div>
+          <div className="bg-white p-8 rounded-lg shadow-xl transform transition-all duration-500 scale-100 animate-pulse relative z-10 w-full max-w-sm">
             <div className="flex flex-col items-center">
-              <div className="bg-green-100 rounded-full p-3 mb-4">
-                <CheckCircle2 className="h-12 w-12 text-green-600" />
+              <div className="bg-gradient-to-r from-green-50 to-emerald-100 rounded-full p-4 mb-4 shadow-inner">
+                <CheckCircle2 className="h-14 w-14 text-emerald-600 animate-bounce" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Login Successful!</h3>
-              <p className="text-gray-600">Welcome back to Pustak Ghar</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back!</h3>
+              <p className="text-gray-600 text-center mb-3">Successfully signed in to Pustak Ghar</p>
+              <div className="w-16 h-1 bg-gradient-to-r from-emerald-300 to-green-500 rounded-full mb-4"></div>
+              <p className="text-sm text-gray-500">Redirecting you to homepage...</p>
             </div>
           </div>
         </div>
@@ -136,9 +138,6 @@ const Login = () => {
           >
             {isLoading ? "Signing in..." : "Sign In"}
           </button>
-
-      
-
 
           <div className="mt-6 text-center">
             <span className="text-gray-600">Don't have an account? </span>

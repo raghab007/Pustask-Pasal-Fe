@@ -10,6 +10,9 @@ import AdminLayout from "../layouts/admin/AdminLayout";
 import { BooksManagement } from "../components/admin/BookManagement";
 import BookDetails from "../components/BookDetails";
 import Cart from "../pages/Cart";
+import Checkout from "../pages/Checkout";
+import OrderConfirmation from "../pages/OrderConfirmation";
+import Orders from "../pages/Orders";
 
 const routes = createBrowserRouter([
   {
@@ -28,8 +31,10 @@ const routes = createBrowserRouter([
           { path: "signup", Component: Signup },
         ],
       },
-      { path: 'cart', Component: Cart }
-
+      { path: 'cart', Component: Cart },
+      { path: 'checkout', Component: Checkout },
+      { path: 'order-confirmation', Component: OrderConfirmation },
+      { path: 'orders', Component: Orders }
     ],
   },
   {
@@ -40,9 +45,7 @@ const routes = createBrowserRouter([
       Component: BooksManagement
     },
     ]
-
   },
 ]);
-
 
 export default routes;

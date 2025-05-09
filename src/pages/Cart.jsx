@@ -1,43 +1,47 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router";
-import { Trash2, Plus, Minus, ShoppingBag } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, AlertCircle, CheckCircle, X } from "lucide-react";
 import { AuthContext } from "../contexts/AuthContext";
-import {
-  getCart,
-  updateCartItem,
-  removeCartItem,
-  clearCart,
-} from "../utils/cartUtils";
+import { useCart } from "../contexts/CartContext";
 
 const Cart = () => {
   const navigate = useNavigate();
   const { isAuthenticated, getAuthHeader } = useContext(AuthContext);
-  const [cart, setCart] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { cart, loading, error, fetchCart, updateItemQuantity, removeItem, clearCartItems } = useCart();
   const [updatingItem, setUpdatingItem] = useState(null);
+  
+  // Toast message state
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success", // success, error, info
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/auth/login", { state: { from: "/cart" } });
       return;
     }
-    fetchCart();
-  }, [isAuthenticated]);
+    fetchCart(getAuthHeader);
+  }, [isAuthenticated, fetchCart, getAuthHeader]);
 
-  const fetchCart = async () => {
-    try {
-      const result = await getCart(getAuthHeader);
-      if (result.success) {
-        setCart(result.data);
-      } else {
-        setError(result.error);
-      }
-    } catch (err) {
-      setError("Failed to fetch cart");
-    } finally {
-      setLoading(false);
+  // Auto-hide toast after 3 seconds
+  useEffect(() => {
+    if (toast.show) {
+      const timer = setTimeout(() => {
+        setToast({ ...toast, show: false });
+      }, 3000);
+      
+      return () => clearTimeout(timer);
     }
+  }, [toast]);
+
+  const showToast = (message, type = "success") => {
+    setToast({
+      show: true,
+      message,
+      type,
+    });
   };
 
   const handleQuantityChange = async (itemId, newQuantity) => {
@@ -45,14 +49,20 @@ const Cart = () => {
 
     setUpdatingItem(itemId);
     try {
-      const result = await updateCartItem(itemId, newQuantity, getAuthHeader);
+      const cartItem = cart.cartItems.find(item => item.id === itemId);
+      if (!cartItem) {
+        showToast("Cart item not found", "error");
+        return;
+      }
+      const result = await updateItemQuantity(cartItem.book.id, newQuantity, getAuthHeader);
       if (result.success) {
-        await fetchCart();
+        showToast(`Updated "${cartItem.book.title}" quantity to ${newQuantity}`, "success");
       } else {
-        setError(result.error);
+        showToast(result.error, "error");
       }
     } catch (err) {
-      setError("Failed to update quantity");
+      console.error('Error updating quantity:', err);
+      showToast("Failed to update quantity", "error");
     } finally {
       setUpdatingItem(null);
     }
@@ -62,14 +72,20 @@ const Cart = () => {
     if (!window.confirm("Are you sure you want to remove this item?")) return;
 
     try {
-      const result = await removeCartItem(itemId, getAuthHeader);
+      const cartItem = cart.cartItems.find(item => item.id === itemId);
+      if (!cartItem) {
+        showToast("Cart item not found", "error");
+        return;
+      }
+      const result = await removeItem(cartItem.book.id, getAuthHeader);
       if (result.success) {
-        await fetchCart();
+        showToast(`"${cartItem.book.title}" removed from cart`, "success");
       } else {
-        setError(result.error);
+        showToast(result.error, "error");
       }
     } catch (err) {
-      setError("Failed to remove item");
+      console.error('Error removing item:', err);
+      showToast("Failed to remove item", "error");
     }
   };
 
@@ -77,14 +93,15 @@ const Cart = () => {
     if (!window.confirm("Are you sure you want to clear your cart?")) return;
 
     try {
-      const result = await clearCart(getAuthHeader);
+      const result = await clearCartItems(getAuthHeader);
       if (result.success) {
-        await fetchCart();
+        showToast("Cart cleared successfully", "success");
       } else {
-        setError(result.error);
+        showToast(result.error, "error");
       }
     } catch (err) {
-      setError("Failed to clear cart");
+      console.error('Error clearing cart:', err);
+      showToast("Failed to clear cart", "error");
     }
   };
 
@@ -111,6 +128,40 @@ const Cart = () => {
     };
   };
 
+  // Toast Component
+  const ToastNotification = () => {
+    if (!toast.show) return null;
+
+    const bgColor = toast.type === "success" ? "bg-green-100" : 
+                   toast.type === "error" ? "bg-red-100" : "bg-blue-100";
+    
+    const borderColor = toast.type === "success" ? "border-green-500" : 
+                       toast.type === "error" ? "border-red-500" : "border-blue-500";
+    
+    const textColor = toast.type === "success" ? "text-green-800" : 
+                     toast.type === "error" ? "text-red-800" : "text-blue-800";
+    
+    const Icon = toast.type === "success" ? CheckCircle : 
+               toast.type === "error" ? AlertCircle : AlertCircle;
+
+    return (
+      <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md`}>
+        <div className={`${bgColor} border-l-4 ${borderColor} p-4 rounded-lg shadow-lg flex items-center justify-between`}>
+          <div className="flex items-center">
+            <Icon className={`${textColor} mr-3`} size={20} />
+            <p className={`${textColor} font-medium`}>{toast.message}</p>
+          </div>
+          <button 
+            onClick={() => setToast({...toast, show: false})}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -121,7 +172,7 @@ const Cart = () => {
     );
   }
 
-  if (error) {
+  if (error && !toast.show) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-red-600">{error}</div>
@@ -132,6 +183,7 @@ const Cart = () => {
   if (!cart || cart?.cartItems?.length === 0) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
+        <ToastNotification />
         <ShoppingBag size={64} className="text-gray-400 mb-4" />
         <h2 className="text-2xl font-bold text-gray-800 mb-2">
           Your cart is empty
@@ -153,6 +205,8 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      <ToastNotification />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Shopping Cart</h1>

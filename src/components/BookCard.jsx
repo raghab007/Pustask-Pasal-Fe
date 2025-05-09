@@ -190,7 +190,6 @@ export default function BookCard({
                 size={18} 
                 className={isFavorite ? "fill-red-500" : ""} 
               />
-              Add to favorite
             </button>
 
             {/* Add to cart button */}

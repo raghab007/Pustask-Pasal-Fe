@@ -34,11 +34,11 @@ export const getCart = async (getAuthHeader) => {
     }
 };
 
-export const updateCartItem = async (itemId, quantity, getAuthHeader) => {
+export const updateCartItem = async (bookId, quantity, getAuthHeader) => {
     try {
         await axios.put(
-            `http://localhost:5001/api/Cart/update/${itemId}`,
-            { quantity },
+            "http://localhost:5001/api/Cart/update",
+            { BookId: bookId, Quantity: quantity },
             {
                 headers: getAuthHeader(),
             }

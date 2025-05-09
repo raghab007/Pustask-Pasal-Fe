@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useContext, useState } from "react";
+import { useContext, useState, useRef, useEffect } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import {
   Menu,
@@ -16,7 +16,9 @@ import {
 const Navbar = () => {
   const { isAuthenticated, logout } = useContext(AuthContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef(null);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -27,7 +29,22 @@ const Navbar = () => {
   const handleLogout = () => {
     logout();
     setIsMenuOpen(false);
+    setIsDropdownOpen(false);
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="bg-black text-white w-full sticky top-0 z-50 shadow-lg">
@@ -96,20 +113,27 @@ const Navbar = () => {
 
             {/* Conditional rendering based on authentication status */}
             {isAuthenticated ? (
-              <div className="relative group">
-                <button className="hover:text-gray-300 transition-colors duration-200">
+              <div className="relative" ref={dropdownRef}>
+                <button 
+                  className="hover:text-gray-300 transition-colors duration-200"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
                   <User size={20} />
                 </button>
-                <div className="absolute right-0 w-48 mt-2 py-2 bg-black border border-gray-700 rounded-lg shadow-xl hidden group-hover:block">
+                <div className={`absolute right-0 w-48 mt-2 py-2 bg-black border border-gray-700 rounded-lg shadow-xl ${
+                  isDropdownOpen ? 'block' : 'hidden'
+                }`}>
                   <Link
                     to="/profile"
                     className="block px-4 py-2 text-sm text-white hover:bg-gray-800"
+                    onClick={() => setIsDropdownOpen(false)}
                   >
                     My Profile
                   </Link>
                   <Link
                     to="/orders"
                     className="block px-4 py-2 text-sm text-white hover:bg-gray-800"
+                    onClick={() => setIsDropdownOpen(false)}
                   >
                     My Orders
                   </Link>

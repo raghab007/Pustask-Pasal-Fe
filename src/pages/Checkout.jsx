@@ -2,12 +2,13 @@ import { useState, useContext } from "react";
 import { useNavigate } from "react-router";
 import { useCart } from "../contexts/CartContext";
 import { AuthContext } from "../contexts/AuthContext";
-import { AlertCircle, CheckCircle, X, CreditCard, Truck, MapPin } from "lucide-react";
+import { AlertCircle, CheckCircle, X, CreditCard, Truck, MapPin, ShoppingBag } from "lucide-react";
+import { placeOrder } from "../utils/orderUtils";
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cart, loading, error } = useCart();
-  const { user } = useContext(AuthContext);
+  const { cart, loading, error, clearCartItems } = useCart();
+  const { user, getAuthHeader } = useContext(AuthContext);
   const [currentStep, setCurrentStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [cardDetails, setCardDetails] = useState({
@@ -91,11 +92,33 @@ const Checkout = () => {
   };
 
   const handlePlaceOrder = async () => {
-    // This is a demo - in real implementation, you would send this to your backend
-    showToast("Order placed successfully!", "success");
-    setTimeout(() => {
-      navigate("/order-confirmation");
-    }, 2000);
+    if (!validateStep()) {
+      return;
+    }
+
+    try {
+      const result = await placeOrder(getAuthHeader);
+      if (result.success) {
+        showToast("Order placed successfully!", "success");
+        // Clear cart after successful order
+        await clearCartItems(getAuthHeader);
+        setTimeout(() => {
+          navigate("/order-confirmation", { 
+            state: { 
+              orderDetails: {
+                claimCode: result.data.claimCode,
+                orderDate: result.data.createdDate,
+                totalPrice: result.data.totalPrice
+              }
+            } 
+          });
+        }, 2000);
+      } else {
+        showToast(result.error || "Failed to place order", "error");
+      }
+    } catch (error) {
+      showToast("Failed to place order", "error");
+    }
   };
 
   // Calculate order summary

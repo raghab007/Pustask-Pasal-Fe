@@ -13,6 +13,7 @@ import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
 import OrderConfirmation from "../pages/OrderConfirmation";
 import Orders from "../pages/Orders";
+import AdminOrders from "../pages/admin/Orders";
 
 const routes = createBrowserRouter([
   {
@@ -40,10 +41,15 @@ const routes = createBrowserRouter([
   {
     path: "/admin",
     Component: AdminLayout,
-    children: [{
-      path: "books",
-      Component: BooksManagement
-    },
+    children: [
+      {
+        path: "books",
+        Component: BooksManagement
+      },
+      {
+        path: "orders",
+        Component: AdminOrders
+      }
     ]
   },
 ]);

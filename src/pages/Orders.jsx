@@ -1,46 +1,61 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router";
 import { Package, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { AuthContext } from "../contexts/AuthContext";
+import { getOrders, cancelOrder } from "../utils/orderUtils";
 
 const Orders = () => {
   const navigate = useNavigate();
+  const { getAuthHeader } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cancellingOrder, setCancellingOrder] = useState(null);
 
-  // Demo data - replace with actual API call
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setOrders([
-        {
-          id: "1",
-          orderNumber: "ORD-2024-001",
-          date: "2024-03-15",
-          status: "delivered",
-          total: 2500,
-          items: [
-            { id: 1, title: "The Great Gatsby", quantity: 1, price: 1500 },
-            { id: 2, title: "To Kill a Mockingbird", quantity: 1, price: 1000 },
-          ],
-        },
-        {
-          id: "2",
-          orderNumber: "ORD-2024-002",
-          date: "2024-03-10",
-          status: "processing",
-          total: 1800,
-          items: [
-            { id: 3, title: "1984", quantity: 1, price: 1800 },
-          ],
-        },
-      ]);
-      setLoading(false);
-    }, 1000);
+    fetchOrders();
   }, []);
 
+  const fetchOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getOrders(getAuthHeader);
+      if (result.success) {
+        setOrders(result.data);
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError("Failed to fetch orders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) {
+      return;
+    }
+
+    setCancellingOrder(orderId);
+    try {
+      const result = await cancelOrder(orderId, getAuthHeader);
+      if (result.success) {
+        // Refresh orders after cancellation
+        await fetchOrders();
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError("Failed to cancel order");
+    } finally {
+      setCancellingOrder(null);
+    }
+  };
+
   const getStatusIcon = (status) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "delivered":
         return <CheckCircle className="text-green-500" />;
       case "processing":
@@ -99,26 +114,26 @@ const Orders = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900">
-                      Order #{order.orderNumber}
+                      Order #{order.claimCode}
                     </h2>
                     <p className="text-sm text-gray-500">
-                      Placed on {new Date(order.date).toLocaleDateString()}
+                      Placed on {new Date(order.createdDate).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {getStatusIcon(order.status)}
+                    {getStatusIcon(order.orderStatus)}
                     <span className="text-sm font-medium text-gray-900">
-                      {getStatusText(order.status)}
+                      {getStatusText(order.orderStatus)}
                     </span>
                   </div>
                 </div>
 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="space-y-4">
-                    {order.items.map((item) => (
+                    {order.orderItems.map((item) => (
                       <div key={item.id} className="flex justify-between items-center">
                         <div>
-                          <h3 className="text-sm font-medium text-gray-900">{item.title}</h3>
+                          <h3 className="text-sm font-medium text-gray-900">{item.book.title}</h3>
                           <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
                         </div>
                         <p className="text-sm font-medium text-gray-900">
@@ -133,19 +148,24 @@ const Orders = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-base font-medium text-gray-900">Total</span>
                     <span className="text-lg font-bold text-gray-900">
-                      Rs {order.total.toFixed(2)}
+                      Rs {order.totalPrice.toFixed(2)}
                     </span>
                   </div>
                 </div>
 
                 <div className="mt-6 flex justify-end space-x-4">
-                  <button
-                    onClick={() => navigate(`/orders/${order.id}`)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                  >
-                    View Details
-                  </button>
-                  {order.status === "delivered" && (
+                  {order.orderStatus.toLowerCase() === "pending" && (
+                    <button
+                      onClick={() => handleCancelOrder(order.id)}
+                      disabled={cancellingOrder === order.id}
+                      className={`px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 ${
+                        cancellingOrder === order.id ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      {cancellingOrder === order.id ? "Cancelling..." : "Cancel Order"}
+                    </button>
+                  )}
+                  {order.orderStatus.toLowerCase() === "delivered" && (
                     <button
                       onClick={() => {/* Handle reorder */}}
                       className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"

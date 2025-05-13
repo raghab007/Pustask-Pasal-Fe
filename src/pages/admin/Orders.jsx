@@ -59,6 +59,24 @@ const AdminOrders = () => {
     }
   };
 
+  const handleProcessOrder = async (orderId) => {
+    try {
+      const result = await updateOrderStatus(orderId, "Processing", getAuthHeader());
+      if (result.success) {
+        // Refresh orders list
+        fetchOrders();
+        // Update selected order if it's the one being modified
+        if (selectedOrder && selectedOrder.order.id === orderId) {
+          setSelectedOrder(result.data);
+        }
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError("Failed to process order");
+    }
+  };
+
   const handleMarkAsDelivered = async (orderId) => {
     try {
       const result = await updateOrderStatus(orderId, "Delivered", getAuthHeader());
@@ -309,6 +327,15 @@ const AdminOrders = () => {
                               <Eye size={16} />
                               View
                             </button>
+                            {orderData.order.status.toLowerCase() === "pending" && (
+                              <button
+                                onClick={() => handleProcessOrder(orderData.order.id)}
+                                className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
+                              >
+                                <Clock size={16} />
+                                Process
+                              </button>
+                            )}
                             {orderData.order.status.toLowerCase() === "processing" && (
                               <button
                                 onClick={() => handleMarkAsDelivered(orderData.order.id)}
@@ -356,6 +383,15 @@ const AdminOrders = () => {
                   <span className="ml-2">{selectedOrder.order.status}</span>
                 </div>
                 
+                {selectedOrder.order.status.toLowerCase() === "pending" && (
+                  <button
+                    onClick={() => handleProcessOrder(selectedOrder.order.id)}
+                    className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center"
+                  >
+                    <Clock size={16} className="mr-2" />
+                    Process Order
+                  </button>
+                )}
                 {selectedOrder.order.status.toLowerCase() === "processing" && (
                   <button
                     onClick={() => handleMarkAsDelivered(selectedOrder.order.id)}

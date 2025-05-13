@@ -11,6 +11,10 @@ import {
   MessageSquare,
   ThumbsUp,
   ThumbsDown,
+  Truck,
+  CheckCircle,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
 import axios from "axios";
 
@@ -1121,6 +1125,265 @@ const ReviewsManagement = () => {
   );
 };
 
+const OrdersManagement = () => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [stats, setStats] = useState([
+    { id: 1, name: "Total Orders", stat: "0", icon: <ShoppingCart size={20} /> },
+    { id: 2, name: "Processing", stat: "0", icon: <Clock size={20} /> },
+    { id: 3, name: "Delivered", stat: "0", icon: <CheckCircle size={20} /> },
+    { id: 4, name: "Cancelled", stat: "0", icon: <X size={20} /> },
+  ]);
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get(
+        `http://localhost:5001/api/Orders/all?page=${currentPage}&pageSize=${pageSize}`
+      );
+      setOrders(response.data);
+      setTotalPages(Math.ceil(response.data.length / pageSize));
+
+      // Update stats
+      const totalOrders = response.data.length;
+      const processingOrders = response.data.filter(
+        (order) => order.order.status === "Processing"
+      ).length;
+      const deliveredOrders = response.data.filter(
+        (order) => order.order.status === "Delivered"
+      ).length;
+      const cancelledOrders = response.data.filter(
+        (order) => order.order.status === "Cancelled"
+      ).length;
+
+      setStats([
+        { ...stats[0], stat: totalOrders.toString() },
+        { ...stats[1], stat: processingOrders.toString() },
+        { ...stats[2], stat: deliveredOrders.toString() },
+        { ...stats[3], stat: cancelledOrders.toString() },
+      ]);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      setError("Failed to fetch orders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, [currentPage]);
+
+  const handleMarkAsDelivered = async (orderId) => {
+    try {
+      await axios.post(`http://localhost:5001/api/Orders/${orderId}/deliver`);
+      fetchOrders();
+    } catch (error) {
+      console.error("Error marking order as delivered:", error);
+      setError("Failed to mark order as delivered");
+    }
+  };
+
+  const handleProcessOrder = async (orderId) => {
+    try {
+      await axios.post(`http://localhost:5001/api/Orders/${orderId}/process`);
+      fetchOrders();
+    } catch (error) {
+      console.error("Error processing order:", error);
+      setError("Failed to process order");
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status.toLowerCase()) {
+      case "delivered":
+        return <CheckCircle className="text-green-500" />;
+      case "processing":
+        return <Clock className="text-blue-500" />;
+      case "cancelled":
+        return <X className="text-red-500" />;
+      default:
+        return <AlertCircle className="text-gray-500" />;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case "delivered":
+        return "bg-green-100 text-green-800";
+      case "processing":
+        return "bg-blue-100 text-blue-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <BookStatistics stats={stats} />
+
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-800">Orders Management</h2>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Order Details
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Customer
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Total
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {orders.map((orderData) => (
+                <tr key={orderData.order.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      #{orderData.order.claimCode}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {new Date(orderData.order.orderDate).toLocaleDateString()}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900">
+                      {orderData.user.name}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {orderData.user.email}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {getStatusIcon(orderData.order.status)}
+                      <span className={`ml-2 px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(orderData.order.status)}`}>
+                        {orderData.order.status}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    Rs {orderData.order.totalPrice.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex gap-2">
+                      {orderData.order.status === "Pending" && (
+                        <button
+                          onClick={() => handleProcessOrder(orderData.order.id)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          Process
+                        </button>
+                      )}
+                      {orderData.order.status === "Processing" && (
+                        <button
+                          onClick={() => handleMarkAsDelivered(orderData.order.id)}
+                          className="text-green-600 hover:text-green-800"
+                        >
+                          Mark as Delivered
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center space-x-4 py-4 border-t border-gray-200">
+            <button
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
+            >
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              Previous
+            </button>
+
+            <div className="flex items-center space-x-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-all duration-200 ${
+                    currentPage === page
+                      ? "bg-black text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="flex items-center px-4 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm"
+            >
+              Next
+              <svg
+                className="w-5 h-5 ml-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const BooksManagement = () => {
   const [activeTab, setActiveTab] = useState("books");
   const [books, setBooks] = useState([]);
@@ -1210,6 +1473,16 @@ export const BooksManagement = () => {
           >
             Reviews
           </button>
+          <button
+            onClick={() => setActiveTab("orders")}
+            className={`${
+              activeTab === "orders"
+                ? "border-black text-black"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Orders
+          </button>
         </nav>
       </div>
 
@@ -1298,8 +1571,10 @@ export const BooksManagement = () => {
             </div>
           </>
         )
-      ) : (
+      ) : activeTab === "reviews" ? (
         <ReviewsManagement />
+      ) : (
+        <OrdersManagement />
       )}
     </div>
   );

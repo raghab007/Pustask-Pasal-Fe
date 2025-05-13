@@ -22,12 +22,6 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
 
   const navItems = [
     {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: <BarChart2 size={20} />,
-      path: "/admin",
-    },
-    {
       id: "books",
       label: "Books",
       icon: <BookOpen size={20} />,

@@ -20,7 +20,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   Plus,
-  Minus
+  Minus,
+  CheckCircle
 } from "lucide-react";
 import axios from "axios";
 import { AuthContext } from "../contexts/AuthContext";
@@ -39,6 +40,7 @@ export default function BookDetails() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState(null);
+  const [topMessage, setTopMessage] = useState(null);
 
   useEffect(() => {
     const fetchBookDetails = async () => {
@@ -55,6 +57,17 @@ export default function BookDetails() {
     fetchBookDetails();
   }, [id]);
 
+  useEffect(() => {
+    // Clear top message after 5 seconds
+    if (topMessage) {
+      const timer = setTimeout(() => {
+        setTopMessage(null);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [topMessage]);
+
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       navigate("/auth/login", { state: { from: `/books/${id}` } });
@@ -68,6 +81,7 @@ export default function BookDetails() {
 
     if (result.success) {
       setCartMessage({ type: "success", text: "Added to cart successfully!" });
+      setTopMessage({ type: "success", text: `${book.title} added to your cart successfully!` });
       setQuantity(1);
     } else {
       setCartMessage({ type: "error", text: result.error });
@@ -135,6 +149,14 @@ export default function BookDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
+      {/* Top Success Message */}
+      {topMessage && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center bg-green-50 border border-green-200 text-green-800 px-6 py-3 rounded-lg shadow-lg">
+          <CheckCircle size={20} className="text-green-500 mr-2" />
+          {topMessage.text}
+        </div>
+      )}
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
         <button

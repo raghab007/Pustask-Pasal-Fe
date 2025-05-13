@@ -20,6 +20,8 @@ import NewReleases from "../components/NewReleases";
 import AwardWinners from "../components/AwardWinners";
 import ComingSoon from "../components/ComingSoon";
 import Deals from "../components/Deals";
+import PurchasedBooks from "../components/PurchasedBooks";
+
 const routes = createBrowserRouter([
   {
     path: "/",
@@ -46,7 +48,8 @@ const routes = createBrowserRouter([
       { path: "new-releases", Component: NewReleases },
       { path: "award-winners", Component: AwardWinners },
       { path: "coming-soon", Component: ComingSoon },
-      { path: "deals", Component: Deals }
+      { path: "deals", Component: Deals },
+      { path: "purchased-books", Component: PurchasedBooks }
     ],
   },
   {

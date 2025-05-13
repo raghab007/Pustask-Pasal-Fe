@@ -84,9 +84,18 @@ export const getOrderByClaimCode = async (claimCode) => {
 
 export const updateOrderStatus = async (orderId, status, authHeader) => {
     try {
-        const response = await axios.put(
-            `${API_URL}/Orders/${orderId}/status`,
-            { status },
+        let endpoint;
+        if (status === "Processing") {
+            endpoint = `${API_URL}/Orders/${orderId}/process`;
+        } else if (status === "Delivered") {
+            endpoint = `${API_URL}/Orders/${orderId}/deliver`;
+        } else {
+            throw new Error("Invalid status");
+        }
+
+        const response = await axios.post(
+            endpoint,
+            {},
             { headers: authHeader }
         );
         return { success: true, data: response.data };
@@ -110,6 +119,21 @@ export const getAllOrders = async (getAuthHeader) => {
         return {
             success: false,
             error: error.response?.data || "Failed to fetch all orders",
+        };
+    }
+};
+
+export const getPurchasedBooks = async (getAuthHeader) => {
+    try {
+        const response = await axios.get(`${API_URL}/Orders/purchased-books`, {
+            headers: getAuthHeader(),
+        });
+        return { success: true, data: response.data };
+    } catch (error) {
+        console.error("Error fetching purchased books:", error);
+        return {
+            success: false,
+            error: error.response?.data || "Failed to fetch purchased books",
         };
     }
 }; 

@@ -10,6 +10,7 @@ import {
 import BookCard from "../components/BookCard";
 import { useSearchParams } from "react-router";
 import axios from "axios";
+import { getBooks } from "../utils/bookUtils";
 
 const GENRES = [
   "THRILLER",
@@ -43,8 +44,9 @@ export default function BooksPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const pageSize = 12;
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 12;
+  const [totalItems, setTotalItems] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
@@ -69,31 +71,26 @@ export default function BooksPage() {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        // Update loading states based on action type
         if (initialLoad) {
           setLoading(true);
         } else if (!isSearching && !isFiltering) {
           setLoading(true);
         }
 
-        let url = `http://localhost:5001/api/Books`;
-
-        // Determine which endpoint to call based on filters
-        if (debouncedSearchQuery) {
-          url = `http://localhost:5001/api/Books/search?title=${encodeURIComponent(
-            debouncedSearchQuery
-          )}&page=${currentPage}&pageSize=${pageSize}`;
-        } else if (selectedGenre && selectedGenre !== "ALL") {
-          url = `http://localhost:5001/api/Books/by-genre-type?genreType=${encodeURIComponent(
-            selectedGenre
-          )}&page=${currentPage}&pageSize=${pageSize}`;
+        const response = await getBooks(currentPage, itemsPerPage, debouncedSearchQuery, selectedGenre, sortBy);
+        if (response.success) {
+          setBooks(response.data.books);
+          setTotalItems(response.data.totalCount);
+          setTotalPages(Math.ceil(response.data.totalCount / itemsPerPage));
+          console.log('Pagination info:', {
+            currentPage,
+            totalItems: response.data.totalCount,
+            itemsPerPage,
+            totalPages: Math.ceil(response.data.totalCount / itemsPerPage)
+          });
         } else {
-          url = `http://localhost:5001/api/Books?page=${currentPage}&pageSize=${pageSize}`;
+          setError(response.error);
         }
-
-        const response = await axios.get(url);
-        setBooks(response.data.books || response.data.Books); // Handle different response structures
-        setTotalCount(response.data.totalCount);
         setInitialLoad(false);
       } catch (err) {
         setError("Failed to fetch books. Please try again later.");
@@ -105,23 +102,81 @@ export default function BooksPage() {
       }
     };
 
-    // Reset to page 1 when search or genre changes
-    if (currentPage === 1) {
-      fetchBooks();
-    } else {
-      setCurrentPage(1);
-    }
-  }, [debouncedSearchQuery, selectedGenre, currentPage]);
+    fetchBooks();
+  }, [debouncedSearchQuery, selectedGenre, currentPage, sortBy]);
 
-  // Calculate total pages
-  const totalPages = Math.ceil(totalCount / pageSize);
-
-  // Handle page change
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const renderPagination = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`px-3 py-1 rounded-md ${
+            currentPage === i
+              ? "bg-black text-white"
+              : "bg-white text-gray-700 hover:bg-gray-50"
+          } border border-gray-200`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-center space-x-2 mt-8">
+        <button
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="p-2 rounded-md border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        {startPage > 1 && (
+          <>
+            <button
+              onClick={() => handlePageChange(1)}
+              className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
+            >
+              1
+            </button>
+            {startPage > 2 && <span className="text-gray-500">...</span>}
+          </>
+        )}
+        {pages}
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <span className="text-gray-500">...</span>}
+            <button
+              onClick={() => handlePageChange(totalPages)}
+              className="px-3 py-1 rounded-md bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+        <button
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-md border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+    );
   };
 
   // Sort books based on selected criteria
@@ -371,114 +426,11 @@ export default function BooksPage() {
           {sortedBooks.length > 0 && (
             <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="text-sm text-gray-500">
-                Showing {sortedBooks.length} of {totalCount} books
+                Showing {sortedBooks.length} of {totalItems} books
               </div>
 
               <div className="flex items-center">
-                <nav
-                  className="isolate inline-flex -space-x-px rounded-md shadow-sm"
-                  aria-label="Pagination"
-                >
-                  <button
-                    onClick={() => handlePageChange(1)}
-                    disabled={currentPage === 1 || loading}
-                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span className="sr-only">First page</span>
-                    <ChevronLeft
-                      size={20}
-                      className="h-5 w-5"
-                      aria-hidden="true"
-                    />
-                    <ChevronLeft
-                      size={20}
-                      className="h-5 w-5 -ml-4"
-                      aria-hidden="true"
-                    />
-                  </button>
-
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1 || loading}
-                    className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span className="sr-only">Previous</span>
-                    <ChevronLeft
-                      size={20}
-                      className="h-5 w-5"
-                      aria-hidden="true"
-                    />
-                  </button>
-
-                  {/* Page Numbers */}
-                  {[...Array(Math.min(5, totalPages))].map((_, idx) => {
-                    let pageNumber;
-
-                    // Calculate which page numbers to show
-                    if (totalPages <= 5) {
-                      pageNumber = idx + 1;
-                    } else if (currentPage <= 3) {
-                      pageNumber = idx + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNumber = totalPages - 4 + idx;
-                    } else {
-                      pageNumber = currentPage - 2 + idx;
-                    }
-
-                    // Only render if page number is valid
-                    if (pageNumber > 0 && pageNumber <= totalPages) {
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => handlePageChange(pageNumber)}
-                          disabled={loading}
-                          aria-current={
-                            currentPage === pageNumber ? "page" : undefined
-                          }
-                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                            currentPage === pageNumber
-                              ? "z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                              : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                          } disabled:opacity-50 disabled:cursor-not-allowed`}
-                        >
-                          {pageNumber}
-                        </button>
-                      );
-                    }
-                    return null;
-                  })}
-
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages || loading}
-                    className="relative inline-flex items-center px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span className="sr-only">Next</span>
-                    <ChevronRight
-                      size={20}
-                      className="h-5 w-5"
-                      aria-hidden="true"
-                    />
-                  </button>
-
-                  <button
-                    onClick={() => handlePageChange(totalPages)}
-                    disabled={currentPage === totalPages || loading}
-                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <span className="sr-only">Last page</span>
-                    <ChevronRight
-                      size={20}
-                      className="h-5 w-5"
-                      aria-hidden="true"
-                    />
-                    <ChevronRight
-                      size={20}
-                      className="h-5 w-5 -ml-4"
-                      aria-hidden="true"
-                    />
-                  </button>
-                </nav>
+                {renderPagination()}
               </div>
             </div>
           )}

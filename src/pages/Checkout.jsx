@@ -127,7 +127,6 @@ const Checkout = () => {
 
     let subtotal = 0;
     let totalDiscount = 0;
-    const shippingCost = 100; // Demo shipping cost
 
     cart.cartItems.forEach((item) => {
       const price = item.book.price;
@@ -141,8 +140,7 @@ const Checkout = () => {
     return {
       subtotal,
       totalDiscount,
-      shippingCost,
-      grandTotal: subtotal - totalDiscount + shippingCost,
+      grandTotal: subtotal - totalDiscount,
     };
   };
 
@@ -474,10 +472,6 @@ const Checkout = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Discount</span>
                   <span className="text-gray-900">Rs {summary.totalDiscount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Shipping</span>
-                  <span className="text-gray-900">Rs {summary.shippingCost.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex justify-between">

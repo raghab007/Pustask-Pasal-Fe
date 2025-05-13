@@ -4,27 +4,23 @@ import { AuthContext } from "../contexts/AuthContext";
 import {
   Menu,
   X,
-  Search,
   ShoppingBag,
   User,
   LogIn,
   UserPlus,
   User2,
-  LogOut
+  LogOut,
+  ChevronDown,
+  BookOpen,
 } from "lucide-react";
 
 const Navbar = () => {
   const { isAuthenticated, logout } = useContext(AuthContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isExploreOpen, setIsExploreOpen] = useState(false);
   const dropdownRef = useRef(null);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    console.log("Searching for:", searchQuery);
-    // Add your search logic here
-  };
+  const exploreRef = useRef(null);
 
   const handleLogout = () => {
     logout();
@@ -32,19 +28,30 @@ const Navbar = () => {
     setIsDropdownOpen(false);
   };
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
+      if (exploreRef.current && !exploreRef.current.contains(event.target)) {
+        setIsExploreOpen(false);
+      }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const exploreItems = [
+    { href: "/bestsellers", label: "Bestsellers" },
+    { href: "/new-arrivals", label: "New Arrivals" },
+    { href: "/new-releases", label: "New Releases" },
+    { href: "/coming-soon", label: "Coming Soon" },
+    { href: "/deals", label: "Deals" },
+  ];
 
   return (
     <nav className="bg-black text-white w-full sticky top-0 z-50 shadow-lg">
@@ -52,7 +59,10 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link to="/" className="font-serif text-2xl font-bold tracking-tight hover:text-gray-300 transition-colors duration-200">
+            <Link
+              to="/"
+              className="font-serif text-2xl font-bold tracking-tight hover:text-gray-300 transition-colors duration-200"
+            >
               Pustak Ghar
             </Link>
           </div>
@@ -60,69 +70,84 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="flex items-center space-x-8">
-              {[
-                { href: "/", label: "Home" },
-                { href: "/books", label: "Books" },
-                { href: "/bestsellers", label: "Bestsellers" },
-                { href: "/new-releases", label: "New Releases" },
-                { href: "/deals", label: "Deals" },
-              ].map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className="text-sm font-medium hover:text-gray-300 transition-colors duration-200 relative group"
+              <Link
+                to="/"
+                className="text-sm font-medium hover:text-gray-300 transition-colors duration-200 relative group"
+              >
+                Home
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200" />
+              </Link>
+
+              <Link
+                to="/books"
+                className="text-sm font-medium hover:text-gray-300 transition-colors duration-200 relative group"
+              >
+                Books
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200" />
+              </Link>
+
+              {/* Explore Dropdown */}
+              <div className="relative" ref={exploreRef}>
+                <button
+                  onClick={() => setIsExploreOpen(!isExploreOpen)}
+                  className="flex items-center text-sm font-medium hover:text-gray-300 transition-colors duration-200"
                 >
-                  {item.label}
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200" />
-                </Link>
-              ))}
+                  Explore
+                  <ChevronDown size={16} className="ml-1" />
+                </button>
+                <div
+                  className={`absolute left-0 mt-2 w-48 bg-black border border-gray-700 rounded-lg shadow-xl ${
+                    isExploreOpen ? "block" : "hidden"
+                  }`}
+                >
+                  {exploreItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      className="block px-4 py-2 text-sm text-white hover:bg-gray-800"
+                      onClick={() => setIsExploreOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Categories */}
+              <Link
+                to="/categories"
+                className="text-sm font-medium hover:text-gray-300 transition-colors duration-200 relative group"
+              >
+                Categories
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200" />
+              </Link>
             </div>
           </div>
 
-          {/* Search, Cart, Account */}
+          {/* Cart and Account */}
           <div className="flex items-center space-x-6">
-            {/* Search Input and Button */}
-            <div className="hidden md:flex items-center">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search books..."
-                  className="px-4 py-2 w-40 lg:w-64 bg-gray-900 text-white border border-gray-700 rounded-l-lg focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all duration-200"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button
-                  onClick={handleSearch}
-                  className="absolute right-0 top-0 h-full px-3 bg-white text-black rounded-r-lg hover:bg-gray-200 transition-colors duration-200"
-                >
-                  <Search size={18} />
-                </button>
-              </div>
-            </div>
-
             {/* Cart Icon */}
-            <Link 
-              to="/cart" 
+            <Link
+              to="/cart"
               className="relative hover:text-gray-300 transition-colors duration-200"
             >
               <ShoppingBag size={20} />
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                0
-              </span>
             </Link>
 
             {/* Conditional rendering based on authentication status */}
             {isAuthenticated ? (
               <div className="relative" ref={dropdownRef}>
-                <button 
+                <button
                   className="hover:text-gray-300 transition-colors duration-200"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
                   <User size={20} />
                 </button>
-                <div className={`absolute right-0 w-48 mt-2 py-2 bg-black border border-gray-700 rounded-lg shadow-xl ${
-                  isDropdownOpen ? 'block' : 'hidden'
-                }`}>
+                <div
+                  className={`absolute right-0 w-48 mt-2 py-2 bg-black border border-gray-700 rounded-lg shadow-xl ${
+                    isDropdownOpen ? "block" : "hidden"
+                  }`}
+                >
                   <Link
                     to="/profile"
                     className="block px-4 py-2 text-sm text-white hover:bg-gray-800"
@@ -153,14 +178,18 @@ const Navbar = () => {
                   className="flex items-center space-x-1 hover:text-gray-300 transition-colors duration-200"
                 >
                   <LogIn size={20} />
-                  <span className="hidden lg:inline text-sm font-medium">Login</span>
+                  <span className="hidden lg:inline text-sm font-medium">
+                    Login
+                  </span>
                 </Link>
                 <Link
                   to="/auth/signup"
                   className="flex items-center space-x-1 bg-white text-black px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors duration-200"
                 >
                   <User2 size={20} />
-                  <span className="hidden lg:inline text-sm font-medium">Sign Up</span>
+                  <span className="hidden lg:inline text-sm font-medium">
+                    Sign Up
+                  </span>
                 </Link>
               </>
             )}
@@ -177,47 +206,53 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div 
+      <div
         className={`md:hidden bg-black border-t border-gray-800 w-full transition-all duration-300 ease-in-out ${
-          isMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+          isMenuOpen
+            ? "max-h-screen opacity-100"
+            : "max-h-0 opacity-0 overflow-hidden"
         }`}
       >
         <div className="px-4 py-3 space-y-3">
-          {/* Mobile Search */}
-          <div className="mb-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search books..."
-                className="w-full px-4 py-2 bg-gray-900 text-white border border-gray-700 rounded-lg focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all duration-200"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <button
-                onClick={handleSearch}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors duration-200"
+          <Link
+            to="/"
+            className="block px-3 py-2 text-white hover:bg-gray-900 rounded-lg transition-colors duration-200"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Home
+          </Link>
+
+          <Link
+            to="/books"
+            className="block px-3 py-2 text-white hover:bg-gray-900 rounded-lg transition-colors duration-200"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Books
+          </Link>
+
+          {/* Explore Section in Mobile Menu */}
+          <div className="border-t border-gray-800 pt-3">
+            <div className="px-3 py-2 text-gray-400 text-sm">Explore</div>
+            {exploreItems.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="block px-3 py-2 text-white hover:bg-gray-900 rounded-lg transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
               >
-                <Search size={18} />
-              </button>
-            </div>
+                {item.label}
+              </Link>
+            ))}
           </div>
 
-          {[
-            { href: "/", label: "Home" },
-            { href: "/books", label: "Books" },
-            { href: "/bestsellers", label: "Bestsellers" },
-            { href: "/new-releases", label: "New Releases" },
-            { href: "/deals", label: "Deals" },
-          ].map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              className="block px-3 py-2 text-white hover:bg-gray-900 rounded-lg transition-colors duration-200"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {/* Categories in Mobile Menu */}
+          <Link
+            to="/categories"
+            className="block px-3 py-2 text-white hover:bg-gray-900 rounded-lg transition-colors duration-200"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Categories
+          </Link>
 
           {/* Login/Signup options for mobile */}
           <div className="border-t border-gray-800 pt-3 mt-3">
@@ -250,7 +285,7 @@ const Navbar = () => {
             ) : (
               <>
                 <Link
-                  to="/login"
+                  to="/auth/login"
                   className="flex items-center px-3 py-2 text-white hover:bg-gray-900 rounded-lg transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -258,7 +293,7 @@ const Navbar = () => {
                   Login
                 </Link>
                 <Link
-                  to="/signup"
+                  to="/auth/signup"
                   className="flex items-center px-3 py-2 mt-2 bg-white text-black rounded-lg hover:bg-gray-200 transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >

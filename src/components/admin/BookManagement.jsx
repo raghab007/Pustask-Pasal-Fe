@@ -221,7 +221,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
       ? new Date(book.discountEndDate).toISOString().split("T")[0]
       : "",
     authors: book?.authors || [{ name: "", bio: "" }],
-    genres: book?.genres?.map(g => g.genreType) || [],
+    genres: book?.genres?.map((g) => g.genreType) || [],
   });
 
   const [frontImageFile, setFrontImageFile] = useState(null);
@@ -325,19 +325,19 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
     try {
       const formDataToSend = new FormData();
 
-      // Append book data
+      // Append book data with proper type conversion
       formDataToSend.append("Title", formData.title);
       formDataToSend.append("ISBN", formData.isbn);
-      formDataToSend.append("Description", formData.description);
-      formDataToSend.append("Price", formData.price);
-      formDataToSend.append("Stock", formData.stock);
+      formDataToSend.append("Description", formData.description || "");
+      formDataToSend.append("Price", parseFloat(formData.price));
+      formDataToSend.append("Stock", parseInt(formData.stock));
       if (formData.publishedDate) {
         formDataToSend.append(
           "PublishedDate",
           new Date(formData.publishedDate).toISOString()
         );
       }
-      formDataToSend.append("Publisher", formData.publisher);
+      formDataToSend.append("Publisher", formData.publisher || "");
       formDataToSend.append("ReleaseStatus", formData.releaseStatus);
       formDataToSend.append("IsOnSale", formData.isOnSale);
       formDataToSend.append("IsBestSeller", formData.isBestSeller);
@@ -348,46 +348,52 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
       });
 
       if (formData.isOnSale) {
-        formDataToSend.append(
-          "DiscountStartDate",
-          new Date(formData.discountStartDate).toISOString()
-        );
-        formDataToSend.append(
-          "DiscountEndDate",
-          new Date(formData.discountEndDate).toISOString()
-        );
+        if (formData.discountStartDate) {
+          formDataToSend.append(
+            "DiscountStartDate",
+            new Date(formData.discountStartDate).toISOString()
+          );
+        }
+        if (formData.discountEndDate) {
+          formDataToSend.append(
+            "DiscountEndDate",
+            new Date(formData.discountEndDate).toISOString()
+          );
+        }
       }
 
-      // Append authors
+      // Append authors with validation
       formData.authors.forEach((author, index) => {
-        formDataToSend.append(`Authors[${index}].Name`, author.name);
-        if (author.bio) {
-          formDataToSend.append(`Authors[${index}].Bio`, author.bio);
+        if (author.name) {  // Only append if name exists
+          formDataToSend.append(`Authors[${index}].Name`, author.name);
+          if (author.bio) {
+            formDataToSend.append(`Authors[${index}].Bio`, author.bio);
+          }
         }
       });
 
-      // Log the form data for debugging
-      console.log("Form Data being sent:", {
-        title: formData.title,
-        isbn: formData.isbn,
-        description: formData.description,
-        price: formData.price,
-        stock: formData.stock,
-        publishedDate: formData.publishedDate,
-        publisher: formData.publisher,
-        releaseStatus: formData.releaseStatus,
-        isOnSale: formData.isOnSale,
-        isBestSeller: formData.isBestSeller,
-        genres: formData.genres,
-        authors: formData.authors
-      });
-
-      // Append files if they exist
+      // Only append files if they are new
       if (frontImageFile) formDataToSend.append("FrontImage", frontImageFile);
       if (backImageFile) formDataToSend.append("BackImage", backImageFile);
 
+      // Log the data being sent
+      console.log('Form data being sent:', {
+        title: formData.title,
+        isbn: formData.isbn,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock),
+        genres: formData.genres,
+        authors: formData.authors,
+        isOnSale: formData.isOnSale,
+        isBestSeller: formData.isBestSeller,
+        description: formData.description || "",
+        publisher: formData.publisher || ""
+      });
+
       let response;
       if (isEditing) {
+        // Update existing book
+        console.log('Updating book with ID:', book.id);
         response = await axios.put(
           `http://localhost:5001/api/Books/${book.id}`,
           formDataToSend,
@@ -398,6 +404,7 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
           }
         );
       } else {
+        // Add new book
         response = await axios.post(
           "http://localhost:5001/api/Books",
           formDataToSend,
@@ -413,7 +420,9 @@ const BookForm = ({ book = null, onSave, onCancel, fetchBooks }) => {
       onSave();
     } catch (error) {
       console.error("Error saving book:", error);
-      console.error("Error response:", error.response?.data);
+      console.error("Error response data:", error.response?.data);
+      console.error("Error response status:", error.response?.status);
+      console.error("Error response headers:", error.response?.headers);
       alert(`Error: ${error.response?.data?.message || error.message}`);
     } finally {
       setIsLoading(false);
@@ -869,9 +878,24 @@ const ReviewsManagement = () => {
   const [pageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState([
-    { id: 1, name: "Total Reviews", stat: "0", icon: <MessageSquare size={20} /> },
-    { id: 2, name: "Positive Reviews", stat: "0", icon: <ThumbsUp size={20} /> },
-    { id: 3, name: "Negative Reviews", stat: "0", icon: <ThumbsDown size={20} /> },
+    {
+      id: 1,
+      name: "Total Reviews",
+      stat: "0",
+      icon: <MessageSquare size={20} />,
+    },
+    {
+      id: 2,
+      name: "Positive Reviews",
+      stat: "0",
+      icon: <ThumbsUp size={20} />,
+    },
+    {
+      id: 3,
+      name: "Negative Reviews",
+      stat: "0",
+      icon: <ThumbsDown size={20} />,
+    },
     { id: 4, name: "Average Rating", stat: "0", icon: <Star size={20} /> },
   ]);
 
@@ -885,9 +909,15 @@ const ReviewsManagement = () => {
 
       // Update stats
       const totalReviews = response.data.totalCount;
-      const positiveReviews = response.data.reviews.filter(review => review.rating >= 4).length;
-      const negativeReviews = response.data.reviews.filter(review => review.rating <= 2).length;
-      const averageRating = response.data.reviews.reduce((acc, review) => acc + review.rating, 0) / totalReviews;
+      const positiveReviews = response.data.reviews.filter(
+        (review) => review.rating >= 4
+      ).length;
+      const negativeReviews = response.data.reviews.filter(
+        (review) => review.rating <= 2
+      ).length;
+      const averageRating =
+        response.data.reviews.reduce((acc, review) => acc + review.rating, 0) /
+        totalReviews;
 
       setStats([
         { ...stats[0], stat: totalReviews.toString() },
@@ -923,12 +953,14 @@ const ReviewsManagement = () => {
   return (
     <div className="space-y-6">
       <BookStatistics stats={stats} />
-      
+
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-800">Reviews Management</h2>
+          <h2 className="text-2xl font-bold text-gray-800">
+            Reviews Management
+          </h2>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -979,8 +1011,12 @@ const ReviewsManagement = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{review.user?.name}</div>
-                    <div className="text-sm text-gray-500">{review.user?.email}</div>
+                    <div className="text-sm text-gray-900">
+                      {review.user?.name}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {review.user?.email}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -989,7 +1025,9 @@ const ReviewsManagement = () => {
                           key={i}
                           size={16}
                           className={`${
-                            i < review.rating ? "text-yellow-400" : "text-gray-300"
+                            i < review.rating
+                              ? "text-yellow-400"
+                              : "text-gray-300"
                           }`}
                           fill={i < review.rating ? "currentColor" : "none"}
                         />

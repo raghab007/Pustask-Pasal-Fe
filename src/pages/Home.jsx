@@ -6,9 +6,12 @@ import {
   Clock,
   Gift,
   Star,
+  Link,
 } from "lucide-react";
 import BookCard from "../components/BookCard";
 import BookImg from "../assets/book.jpg";
+import BookCategories from "../components/BookCategories";
+import { Loader2 } from "lucide-react";
 // Sample book data
 const featuredBooks = [
   {
@@ -203,7 +206,7 @@ const bookCategories = [
 ];
 
 // Carousel component for book sections
-const BookCarousel = ({ title, books, viewAllLink = "#" }) => {
+const BookCarousel = ({ title, books, viewAllLink = "#", loading, error }) => {
   const [scrollPosition, setScrollPosition] = useState(0);
   const [maxScroll, setMaxScroll] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -266,7 +269,13 @@ const BookCarousel = ({ title, books, viewAllLink = "#" }) => {
           ref={setCarouselRef}
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {books.map((book) => (
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-500">{error}</div>
+          ) : books.map((book) => (
             <div key={book.id} className="min-w-[240px] max-w-[240px]">
               <BookCard {...book} />
             </div>
@@ -374,6 +383,74 @@ const CountdownTimer = () => {
 };
 
 export default function HomePage() {
+  const [featuredBooks, setFeaturedBooks] = useState([]);
+  const [newArrivals, setNewArrivals] = useState([]);
+  const [bestsellers, setBestsellers] = useState([]);
+  const [onSaleBooks, setOnSaleBooks] = useState([]);
+  const [loading, setLoading] = useState({
+    featured: true,
+    newArrivals: true,
+    bestsellers: true,
+    onSale: true,
+  });
+  const [error, setError] = useState({
+    featured: null,
+    newArrivals: null,
+    bestsellers: null,
+    onSale: null,
+  });
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        // Fetch featured books
+        const featuredResponse = await fetch("http://localhost:5001/api/Books/featured");
+        if (!featuredResponse.ok) throw new Error("Failed to fetch featured books");
+        const featuredData = await featuredResponse.json();
+        setFeaturedBooks(featuredData);
+        setLoading(prev => ({ ...prev, featured: false }));
+
+        // Fetch new arrivals
+        const newArrivalsResponse = await fetch("http://localhost:5001/api/Books/new-arrivals");
+        if (!newArrivalsResponse.ok) throw new Error("Failed to fetch new arrivals");
+        const newArrivalsData = await newArrivalsResponse.json();
+        setNewArrivals(newArrivalsData);
+        setLoading(prev => ({ ...prev, newArrivals: false }));
+
+        // Fetch bestsellers
+        const bestsellersResponse = await fetch("http://localhost:5001/api/Books/bestsellers");
+        if (!bestsellersResponse.ok) throw new Error("Failed to fetch bestsellers");
+        const bestsellersData = await bestsellersResponse.json();
+        setBestsellers(bestsellersData);
+        setLoading(prev => ({ ...prev, bestsellers: false }));
+
+        // Fetch on-sale books
+        const onSaleResponse = await fetch("http://localhost:5001/api/Books/on-sale");
+        if (!onSaleResponse.ok) throw new Error("Failed to fetch on-sale books");
+        const onSaleData = await onSaleResponse.json();
+        setOnSaleBooks(onSaleData);
+        setLoading(prev => ({ ...prev, onSale: false }));
+      } catch (err) {
+        setError(prev => ({
+          ...prev,
+          featured: err.message,
+          newArrivals: err.message,
+          bestsellers: err.message,
+          onSale: err.message,
+        }));
+        setLoading(prev => ({
+          ...prev,
+          featured: false,
+          newArrivals: false,
+          bestsellers: false,
+          onSale: false,
+        }));
+      }
+    };
+
+    fetchBooks();
+  }, []);
+
   return (
     <div className="bg-gray-50">
       {/* Hero Section */}
@@ -451,18 +528,64 @@ export default function HomePage() {
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Featured Books */}
-        <BookCarousel
-          title="Featured Books"
-          books={featuredBooks}
-          viewAllLink="/books"
-        />
+        {/* Book Categories Section */}
+        <div className="mb-16">
+          <h2 className="text-2xl font-bold mb-6">Browse by Category</h2>
+          <BookCategories />
+        </div>
+
+        {/* Featured Books Section */}
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Featured Books</h2>
+            <Link
+              to="/books"
+              className="text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              View All Books →
+            </Link>
+          </div>
+
+          {loading.featured ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            </div>
+          ) : error.featured ? (
+            <div className="text-center text-red-500">{error.featured}</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {featuredBooks.map((book) => (
+                <BookCard
+                  key={book.id}
+                  id={book.id}
+                  title={book.title}
+                  author={book.authors?.[0]?.name || book.publisher}
+                  price={book.price}
+                  originalPrice={
+                    book.isOnSale
+                      ? Math.round(
+                          book.price * (1 + (book.discountPercentage || 0) / 100)
+                        )
+                      : null
+                  }
+                  rating={book.averageRating || 0}
+                  reviewCount={book.totalReviews || 0}
+                  coverImage={book.frontImage}
+                  isNewRelease={book.releaseStatus === "Coming Soon"}
+                  isBestseller={book.isBestSeller}
+                />
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* New Arrivals */}
         <BookCarousel
           title="New Arrivals"
           books={newArrivals}
           viewAllLink="/new-arrivals"
+          loading={loading.newArrivals}
+          error={error.newArrivals}
         />
 
         {/* Limited Time Offer */}
@@ -475,17 +598,31 @@ export default function HomePage() {
             <CountdownTimer />
           </div>
           <div className="flex justify-center">
-            <button className="px-6 py-3 bg-white text-black font-medium rounded hover:bg-gray-200 transition duration-300">
+            <Link
+              to="/sale"
+              className="px-6 py-3 bg-white text-black font-medium rounded hover:bg-gray-200 transition duration-300"
+            >
               Shop the Sale
-            </button>
+            </Link>
           </div>
         </div>
+
+        {/* Bestsellers */}
+        <BookCarousel
+          title="Bestsellers"
+          books={bestsellers}
+          viewAllLink="/bestsellers"
+          loading={loading.bestsellers}
+          error={error.bestsellers}
+        />
 
         {/* On Sale Books */}
         <BookCarousel
           title="On Sale Books"
           books={onSaleBooks}
           viewAllLink="/sale"
+          loading={loading.onSale}
+          error={error.onSale}
         />
 
         {/* Book Categories */}

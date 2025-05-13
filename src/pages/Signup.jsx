@@ -2,7 +2,15 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import axios from "axios";
-import { UserPlus, Mail, User, Lock, MapPin, Calendar, CheckCircle2 } from "lucide-react";
+import {
+  UserPlus,
+  Mail,
+  User,
+  Lock,
+  MapPin,
+  Calendar,
+  CheckCircle2,
+} from "lucide-react";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -22,7 +30,7 @@ const Signup = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     // Email validation
     if (!formData.email) {
       newErrors.email = "Email is required";
@@ -85,22 +93,25 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
     try {
-      const response = await axios.post("http://localhost:5001/api/Auth/signup", {
-        email: formData.email,
-        userName: formData.userName,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        age: parseInt(formData.age),
-        password: formData.password,
-        address: formData.address,
-      });
+      const response = await axios.post(
+        "http://localhost:5001/api/Auth/signup",
+        {
+          email: formData.email,
+          userName: formData.userName,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          age: parseInt(formData.age),
+          password: formData.password,
+          address: formData.address,
+        }
+      );
 
       if (response.status === 200 || response.status === 201) {
         setIsSuccess(true);
@@ -116,13 +127,15 @@ const Signup = () => {
         });
         // Redirect after 2 seconds
         setTimeout(() => {
-          navigate("/authlogin");
+          navigate("/auth/login");
         }, 2000);
       }
     } catch (error) {
       console.error("Registration error:", error);
       setErrors({
-        submit: error.response?.data?.message || "Registration failed. Please try again.",
+        submit:
+          error.response?.data?.message ||
+          "Registration failed. Please try again.",
       });
     } finally {
       setIsLoading(false);
@@ -137,7 +150,10 @@ const Signup = () => {
         </h2>
         <p className="text-center text-base text-gray-600 mb-10">
           Already have an account?{" "}
-          <Link to="/authlogin" className="font-medium text-black hover:text-gray-800">
+          <Link
+            to="/authlogin"
+            className="font-medium text-black hover:text-gray-800"
+          >
             Sign in
           </Link>
         </p>
@@ -152,7 +168,8 @@ const Signup = () => {
                 Registration Successful!
               </h3>
               <p className="text-base text-gray-600">
-                Your account has been created successfully. Redirecting to login page...
+                Your account has been created successfully. Redirecting to login
+                page...
               </p>
             </div>
           ) : (
@@ -160,7 +177,10 @@ const Signup = () => {
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {/* First Name */}
                 <div>
-                  <label htmlFor="firstName" className="block text-base font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="firstName"
+                    className="block text-base font-medium text-gray-700 mb-1"
+                  >
                     First Name
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
@@ -180,13 +200,18 @@ const Signup = () => {
                     />
                   </div>
                   {errors.firstName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.firstName}
+                    </p>
                   )}
                 </div>
 
                 {/* Last Name */}
                 <div>
-                  <label htmlFor="lastName" className="block text-base font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="lastName"
+                    className="block text-base font-medium text-gray-700 mb-1"
+                  >
                     Last Name
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
@@ -206,7 +231,9 @@ const Signup = () => {
                     />
                   </div>
                   {errors.lastName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.lastName}
+                    </p>
                   )}
                 </div>
               </div>
@@ -214,7 +241,10 @@ const Signup = () => {
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {/* Email */}
                 <div>
-                  <label htmlFor="email" className="block text-base font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="email"
+                    className="block text-base font-medium text-gray-700 mb-1"
+                  >
                     Email address
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
@@ -240,7 +270,10 @@ const Signup = () => {
 
                 {/* Username */}
                 <div>
-                  <label htmlFor="userName" className="block text-base font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="userName"
+                    className="block text-base font-medium text-gray-700 mb-1"
+                  >
                     Username
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
@@ -260,7 +293,9 @@ const Signup = () => {
                     />
                   </div>
                   {errors.userName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.userName}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.userName}
+                    </p>
                   )}
                 </div>
               </div>
@@ -268,7 +303,10 @@ const Signup = () => {
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {/* Age */}
                 <div>
-                  <label htmlFor="age" className="block text-base font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="age"
+                    className="block text-base font-medium text-gray-700 mb-1"
+                  >
                     Age
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
@@ -296,7 +334,10 @@ const Signup = () => {
 
                 {/* Password */}
                 <div>
-                  <label htmlFor="password" className="block text-base font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="password"
+                    className="block text-base font-medium text-gray-700 mb-1"
+                  >
                     Password
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
@@ -316,14 +357,19 @@ const Signup = () => {
                     />
                   </div>
                   {errors.password && (
-                    <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.password}
+                    </p>
                   )}
                 </div>
               </div>
 
               {/* Address */}
               <div>
-                <label htmlFor="address" className="block text-base font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="address"
+                  className="block text-base font-medium text-gray-700 mb-1"
+                >
                   Address
                 </label>
                 <div className="mt-1 relative rounded-md shadow-sm">

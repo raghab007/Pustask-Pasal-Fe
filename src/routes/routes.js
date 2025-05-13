@@ -14,7 +14,12 @@ import Checkout from "../pages/Checkout";
 import OrderConfirmation from "../pages/OrderConfirmation";
 import Orders from "../pages/Orders";
 import AdminOrders from "../pages/admin/Orders";
-
+import BestSellerBooks from "../components/BestSellerBooks";
+import NewArrivals from "../components/NewArrivals";
+import NewReleases from "../components/NewReleases";
+import AwardWinners from "../components/AwardWinners";
+import ComingSoon from "../components/ComingSoon";
+import Deals from "../components/Deals";
 const routes = createBrowserRouter([
   {
     path: "/",
@@ -33,9 +38,15 @@ const routes = createBrowserRouter([
         ],
       },
       { path: 'cart', Component: Cart },
+      { path: 'bestsellers', Component: BestSellerBooks },
       { path: 'checkout', Component: Checkout },
       { path: 'order-confirmation', Component: OrderConfirmation },
-      { path: 'orders', Component: Orders }
+      { path: 'orders', Component: Orders },
+      { path: "new-arrivals", Component: NewArrivals },
+      { path: "new-releases", Component: NewReleases },
+      { path: "award-winners", Component: AwardWinners },
+      { path: "coming-soon", Component: ComingSoon },
+      { path: "deals", Component: Deals }
     ],
   },
   {
